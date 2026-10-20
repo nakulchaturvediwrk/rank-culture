@@ -103,6 +103,6 @@ This is a **clickable prototype** for feedback from faculty and mentors — not 
 
 ## Author
 
-**Nakul Chaturvedi** — [LinkedIn](https://www.linkedin.com/in/nakul-chaturvedi-142588248) · [GitHub](https://github.com/nakulchaturvediwrk)
+**Nakul Chaturvedi** — [LinkedIn](https://www.linkedin.com/in/nakulchaturvediwork) · [GitHub](https://github.com/nakulchaturvediwrk)
 
 © 2026 Nakul Chaturvedi. All rights reserved.

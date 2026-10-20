@@ -323,7 +323,7 @@ const about = publicPage({
 </div></section>
 <section class="section"><div class="container grid g2" style="gap:var(--s7);align-items:center">
   <div class="stack"><div class="label muted">Founder</div><h2 class="t-h1">Nakul Chaturvedi</h2><p class="muted">Civil engineer from NIT Surat who worked his way into founder's-office roles across fintech, media and real estate — and saw first-hand how much talent gets filtered out before anyone looks at the work.</p>
-    <div class="row"><a class="link" href="https://www.linkedin.com/in/nakul-chaturvedi-142588248" target="_blank" rel="noopener">LinkedIn →</a><a class="link" href="contact.html">Get in touch →</a></div></div>
+    <div class="row"><a class="link" href="https://www.linkedin.com/in/nakulchaturvediwork" target="_blank" rel="noopener">LinkedIn →</a><a class="link" href="contact.html">Get in touch →</a></div></div>
   <div class="card dark card-lg"><p class="t-h2">"We're not building another job board. We're building the arena."</p></div>
 </div></section>`,
 });
