@@ -289,7 +289,7 @@ H["dashboard.html"] = async () => {
     const hist = r.history && r.history.length ? r.history : [r.score], lo = Math.min(...hist), hi = Math.max(...hist);
     const last = ts.map(t => ents[t.id] && t.cat === f ? Object.assign({ t }, ents[t.id]) : null).filter(Boolean).sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))[0];
     const tasks = last ? last.task_scores.filter(x => x.max) : [];
-    const weak = tasks.slice().sort((a, b) => a.points / a.max - b.points / b.max)[0];
+    const weak = tasks.filter(x => x.points < x.max).sort((a, b) => a.points / a.max - b.points / b.max)[0];
     const rk = ranks[f], top = rk ? Math.max(1, Math.round((rk.place / rk.total) * 100)) : null, nt = nextTier(r.score);
     return `<div data-role="${f}" class="${hidden ? "hide" : ""} stack-lg"><div class="grid g3">
     <div class="card card-lg span2"><div class="card-head"><div><div class="label muted">Your rank · ${esc(FIELDS[f])}</div><div class="row mt1">${tierBadge(r.score)}${rk ? `<span class="label blue">#${n(rk.place)} of ${n(rk.total)} · Top ${top}%</span>` : ""}</div></div><a class="link" href="profile.html">My profile →</a></div>
@@ -334,7 +334,11 @@ const publicCards = async (sel, limit, signedIn) => {
   if (b) b.textContent = live ? `${live} tournament${live === 1 ? "" : "s"} live now` : "New tournaments every week";
 };
 H["tournaments.html"] = signedIn => publicCards("#t-grid", 50, signedIn);
-H["index.html"] = signedIn => Promise.all([publicCards("#home-t", 3, signedIn), BX.homeBoard && BX.homeBoard()]);
+const siteStats = async () => {
+  if (!$("[data-stat]")) return;
+  try { const st = await q(sb.rpc("site_stats")); $$("[data-stat]").forEach(el => { el.textContent = n(st[el.dataset.stat]); }); } catch (e) { /* keep dashes */ }
+};
+H["index.html"] = signedIn => Promise.all([publicCards("#home-t", 3, signedIn), BX.homeBoard && BX.homeBoard(), siteStats()]);
 
 H["tournament.html"] = async () => {
   const id = params().get("t") || "growth";
@@ -387,8 +391,8 @@ H["live.html"] = async () => {
   main().insertAdjacentHTML("afterbegin", `<div class="arena-top"><div class="container"><div><div class="label" style="color:#9DB1FF">${esc(t.name)} · Live</div><div class="t-sm">Task <span id="q-num">1</span> of ${qs.length}</div></div>
     <div class="q-dots" aria-label="Tasks">${qs.map((x, i) => `<span role="button" tabindex="0" data-dot="${i}">${i + 1}</span>`).join("")}</div>
     <div class="row"><span class="badge red live">Timed</span><div class="timer" id="rc-timer" aria-live="off">--:--</div></div></div></div>`);
-  render(`<div data-rc-arena style="max-width:960px;margin:0 auto">${qs.map((x, i) => `<div class="q stack-lg${i ? " hide" : ""}" data-qi="${i}">
-    <div class="stack"><div class="row"><span class="badge">${esc(x.label)}</span><span class="mono t-xs muted">${x.kind === "mcq" ? `${x.points} pts` : "Human-reviewed"}</span></div><h1 class="t-h2">${esc(x.prompt)}</h1>${x.context ? `<p class="muted">${esc(x.context)}</p>` : ""}</div>
+  render(`<h1 class="sr">${esc(t.name)} — live</h1><div data-rc-arena style="max-width:960px;margin:0 auto">${qs.map((x, i) => `<div class="q stack-lg${i ? " hide" : ""}" data-qi="${i}">
+    <div class="stack"><div class="row"><span class="badge">${esc(x.label)}</span><span class="mono t-xs muted">${x.kind === "mcq" ? `${x.points} pts` : "Human-reviewed"}</span></div><h2 class="t-h2">${esc(x.prompt)}</h2>${x.context ? `<p class="muted">${esc(x.context)}</p>` : ""}</div>
     ${table(x.table_data)}
     ${x.kind === "mcq" ? `<div class="stack">${(x.options || []).map((o, k) => `<button class="option${ans[x.id] === k ? " selected" : ""}" aria-pressed="${ans[x.id] === k}" data-q="${x.id}" data-k="${k}"><span class="key">${"ABCDEF"[k]}</span>${esc(o)}</button>`).join("")}</div>`
       : `<textarea class="input" style="min-height:220px" maxlength="4000" data-q="${x.id}" placeholder="Type your answer…">${esc(ans[x.id] || "")}</textarea><div class="row between t-xs muted"><span>${ic("shield")} Saved on this device as you type</span><span>AI tools not allowed for this task</span></div>`}
@@ -432,7 +436,7 @@ H["results.html"] = async () => {
   const applied = new Set(apps.map(a => a.job_id)), claimable = jobs.filter(j => j.fast_track && score >= j.min_rank && !applied.has(j.id));
   const top = Math.max(1, Math.round(s.place / s.total * 100));
   render(`<div class="card dark card-lg mb3" style="box-shadow:8px 8px 0 var(--blue)"><div class="grid g2" style="align-items:center;gap:var(--s7)">
-    <div class="stack"><div class="label" style="color:#9DB1FF">${esc(t.name)} · ${e.written_pending ? "Provisional result" : "Result"}</div>
+    <div class="stack"><h1 class="label" style="color:#9DB1FF">${esc(t.name)} · ${e.written_pending ? "Provisional result" : "Result"}</h1>
       <div class="score"><span class="num">${score}</span><span class="of">/1000</span></div>
       <div class="row">${t.ranked ? `<span class="badge blue">${tierName(score)}${up ? " — rank up!" : ""}</span>` : '<span class="badge">Practice · rank unchanged</span>'}<span class="label" style="color:#9DB1FF">#${n(s.place)} of ${n(s.total)} · Top ${top}%</span></div>
       <p class="muted">${t.ranked ? (before == null ? `This sets your starting ${esc(FIELDS[t.cat])} rank.` : `Your ${esc(FIELDS[t.cat])} rank moved from ${before} to ${e.rating_after}.`) : `You scored ${e.auto_points} of ${e.auto_max} points.`}${e.written_pending ? " Written answers are reviewed by humans and can add points within 48 hours." : ""}</p></div>

@@ -10,7 +10,7 @@ const recHeader = (active) => `
   <div class="row between mb2">${logo("recruiter.html")}<button class="icon-btn" data-close-drawer aria-label="Close">${ic("x")}</button></div>
   <a class="dl" href="recruiter.html">Talent search</a><a class="dl" href="host-tournament.html">Host tournament</a><a class="dl" href="employers.html">Plans</a><a class="dl" href="index.html">Log out</a>
 </div></div>`;
-const recPage = (title, active, body) => barePage({ title, header: "none", body: recHeader(active) + `<div class="container section-sm" style="max-width:1280px">${body}</div>` });
+const recPage = (title, active, body) => barePage({ title, header: "none", body: recHeader(active) + `<div class="container section-sm" style="max-width:1280px"><div class="banner amber mb3"><span><strong>Sample employer screen.</strong> The recruiter console opens to pilot partners soon — candidates and numbers here are example data.</span><a class="btn btn-sm" href="employers.html">Join the pilot</a></div>${body}</div>` });
 
 const CANDS = [
   ["C-2041", "Growth Marketing", "Pune", 968, [["Copy", 98], ["Funnels", 95], ["Ads", 91]], "Open", "marketing"],

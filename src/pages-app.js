@@ -119,8 +119,8 @@ const tournament = appPage({
     <div class="card card-lg">
       <h2 class="t-h3 mb2">Prizes</h2>
       <div class="grid g3">
-        <div class="card dark"><div class="label" style="color:#9DB1FF">Top 20</div><p class="t-sm mt1">Interview fast-track at all 6 partner companies + share of ₹50,000</p></div>
-        <div class="card blue"><div class="label">Top 10%</div><p class="t-sm mt1">Fast-track at 2 companies of your choice</p></div>
+        <div class="card dark"><div class="label" style="color:#9DB1FF">Top finishers</div><p class="t-sm mt1">Fast-track to pilot partner roles</p></div>
+        <div class="card blue"><div class="label">Above the bar</div><p class="t-sm mt1">Fast-track applications to partner jobs that hire from this tournament</p></div>
         <div class="card"><div class="label">Everyone</div><p class="t-sm mt1 muted">Verified score, full breakdown, rank points</p></div>
       </div>
     </div>

@@ -8,11 +8,10 @@ const authSide = (title, body) => `
     <p class="muted">${body}</p>
   </div>
   <div class="stack">
-    <div class="row between t-sm"><span class="muted">This weekend</span><span class="badge red live">Live</span></div>
+    <div class="label muted">How it works</div>
     <div class="list t-sm" style="border-top:1px solid #2A2B30">
-      ${[["Growth Marketing Cup", "2,418"], ["SQL Sprint", "3,104"], ["Ops Case Showdown", "1,712"]].map(([n, c]) => `<div style="border-color:#2A2B30"><span>${n}</span><span class="mono">${c}</span></div>`).join("")}
+      ${[["Compete", "Free tournaments & live battles"], ["Get ranked", "A verified score per skill"], ["Get hired", "Fast-tracks to partner roles"]].map(([n, c]) => `<div style="border-color:#2A2B30"><span>${n}</span><span class="muted">${c}</span></div>`).join("")}
     </div>
-    <p class="t-xs muted">"I'm from a tier-3 college in Nagpur. Rank Culture got me 3 interviews in my first month." — Sneha P., #5 Sales</p>
   </div>
 </aside>`;
 

@@ -113,7 +113,7 @@ const appHeader = (active) => `
     ${[["dashboard.html","Dashboard"],["arena.html","Tournaments"],["battles.html","Battles"],["jobs.html","Jobs"],["leaderboard-app.html","Leaderboard"]].map(([h,l])=>`<a href="${h}"${h===active?' class="active" aria-current="page"':""}>${l}</a>`).join("")}
   </nav>
   <div class="header-actions">
-    <a class="btn btn-sm hide-m" href="pricing.html?from=app">Go Pro</a>
+    <a class="btn btn-sm hide-m" href="pricing.html?from=app">Pricing</a>
     <a class="icon-btn" href="notifications.html" aria-label="Notifications">${ic("bell")}</a>
     <a class="icon-btn hide-m" href="settings.html" aria-label="Settings">${ic("gear")}</a>
     <a class="avatar hide-m" href="profile.html" aria-label="My profile" data-me="initials">··</a>

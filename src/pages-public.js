@@ -57,19 +57,19 @@ const index = publicPage({
     <div class="row t-sm muted"><span>${ic("check")} Free for candidates</span><span>${ic("check")} Private by default</span><span>${ic("check")} Any college, any city</span></div>
   </div>
   <div class="card card-lg" style="box-shadow:8px 8px 0 var(--ink)">
-    <div class="card-head"><div><div class="label muted">Live rank card</div><div class="t-h3 mt1">Riya Sharma</div><div class="t-sm muted">Pune · Tier-3 college · Growth Marketing</div></div>${tierBadge(968)}</div>
+    <div class="card-head"><div><div class="label muted">Example rank card</div><div class="t-h3 mt1">What yours could look like</div><div class="t-sm muted">Growth Marketing · illustration, not a real player</div></div>${tierBadge(968)}</div>
     <div class="score"><span class="num">968</span><span class="of">/1000</span></div>
-    <div class="label blue mt1">#1 in India · Growth Marketing</div>
+    <div class="label blue mt1">Legend tier · Growth Marketing</div>
     <div class="stack mt3 t-sm">
       <div><div class="row between"><span>Copywriting</span><span class="mono">98</span></div>${bar(98, "blue")}</div>
       <div><div class="row between"><span>Funnel analysis</span><span class="mono">95</span></div>${bar(95)}</div>
       <div><div class="row between"><span>Paid ads</span><span class="mono">91</span></div>${bar(91)}</div>
     </div>
-    <div class="banner blue mt3 t-sm" style="padding:var(--s3)"><span><strong>3 interview fast-tracks</strong> won this month</span><span class="badge green">Hired</span></div>
+    <div class="banner blue mt3 t-sm" style="padding:var(--s3)"><span>Every number comes from <strong>tournament and battle answers</strong> — nothing self-reported</span></div>
   </div>
 </div></section>
 
-<div class="marquee" aria-hidden="true"><div>${Array(2).fill(["Growth Marketing Cup · 2,418 registered", "SQL Sprint · Sunday 11 AM", "Ops Case Showdown · LIVE", "Riya from Pune just hit #1", "Backend Bug Hunt · 7 companies hiring", "Product Teardown Clash · Wed 8 PM"].map(s => `<span>${s}</span>`).join("")).join("")}</div></div>
+<div class="marquee" aria-hidden="true"><div>${Array(2).fill(["Live battles every day", "Fastest Finger · 9 PM daily", "Saturday Showdown · 8 PM", "Knockout cups · Wed & Sun 7 PM", "Company-style packs: TCS · Infosys · Accenture · Deloitte · Amazon · Consulting", "Free to enter"].map(s => `<span>${s}</span>`).join("")).join("")}</div></div>
 
 <section class="section"><div class="container">
   <div class="sec-head"><h2 class="t-h1">The old way is broken</h2><span class="label muted">Why Rank Culture exists</span></div>
@@ -101,7 +101,7 @@ const index = publicPage({
 
 <section class="section"><div class="container">
   <div class="sec-head"><h2 class="t-h1">This week's tournaments</h2><a class="link" href="tournaments.html">All tournaments →</a></div>
-  <div class="grid g3" id="home-t">${TOURNAMENTS.slice(0, 3).map(t => tournamentCard(t, "signup.html")).join("")}</div>
+  <div class="grid g3" id="home-t"><p class="muted">Loading this week's tournaments…</p></div>
 </div></section>
 
 <section class="section"><div class="container grid g2" style="gap:var(--s7);align-items:start">
@@ -117,15 +117,15 @@ const index = publicPage({
     <div class="sec-head" style="margin-bottom:var(--s4)"><h2 class="t-h1">The promise</h2></div>
     <div class="card dark card-lg stack">
       <p class="t-h2">"If you're ranked here, nobody can stop you from getting hired."</p>
-      <p class="muted">That's the bar we hold ourselves to. If you finish a tournament in the top 10% and don't get at least one interview within 60 days, Pro is free for life.</p>
+      <p class="muted">That's the bar we hold ourselves to. Every rank is earned on the clock, on real work — so a high one means something to the people hiring.</p>
     </div>
     <div class="grid g2">
-      <div class="card kpi"><div class="label muted">Candidates ranked</div><div class="v mt1">1.2 L</div></div>
-      <div class="card kpi"><div class="label muted">Hiring partners</div><div class="v mt1">140</div></div>
-      <div class="card kpi"><div class="label muted">From tier-2/3 cities</div><div class="v mt1">61%</div></div>
-      <div class="card kpi"><div class="label muted">Median time to interview</div><div class="v mt1">9 days</div></div>
+      <div class="card kpi"><div class="label muted">Players ranked</div><div class="v mt1" data-stat="ranked">—</div></div>
+      <div class="card kpi"><div class="label muted">Tournament & battle entries</div><div class="v mt1" data-stat="played">—</div></div>
+      <div class="card kpi"><div class="label muted">Questions in the bank</div><div class="v mt1" data-stat="questions">—</div></div>
+      <div class="card kpi"><div class="label muted">Live events this week</div><div class="v mt1" data-stat="events">—</div></div>
     </div>
-    <p class="t-xs muted">Prototype figures shown for illustration.</p>
+    <p class="t-xs muted">Live numbers from the platform. Rank Culture is in its pilot, so these start small.</p>
   </div>
 </div></section>
 
@@ -166,7 +166,7 @@ const howItWorks = publicPage({
   <div class="list">
     ${[["Is it really free?", "Yes. Tournaments, your rank and job applications are free forever. Pro (₹199/month) adds unlimited drills, detailed score breakdowns and priority fast-tracks."],
        ["Can someone cheat?", "Tournaments are proctored with webcam checks, tab monitoring and plagiarism detection. Flagged attempts are reviewed by a human before any score is published."],
-       ["I'm from a tier-3 college. Does that matter?", "No. Recruiters can't see your college until they invite you to interview. 61% of our ranked candidates are from tier-2 and tier-3 cities."],
+       ["I'm from a tier-3 college. Does that matter?", "No. Recruiters can't see your college until they invite you to interview. Your rank comes only from what you do in tournaments and battles."],
        ["What if I score low?", "Your score is private by default. Only you see it until you choose to make it public. Do drills, retake in 30 days."],
        ["Who builds the tasks?", "Our hiring partners and a panel of practitioners. Every task maps to work the role actually does in its first 90 days."]]
       .map(([q, a]) => `<details style="display:block;padding:var(--s4) 0;border-bottom:var(--border-thin)"><summary class="t-h3" style="cursor:pointer">${q}</summary><p class="muted mt1">${a}</p></details>`).join("")}
@@ -192,7 +192,7 @@ const tournamentsPublic = publicPage({
       ${Object.entries(catLabel).map(([k, v]) => `<button class="chip" data-value="${k}" aria-pressed="false">${v}</button>`).join("")}
     </div>
   </div>
-  <div class="grid g3" id="t-grid">${TOURNAMENTS.map(t => tournamentCard(t, "signup.html")).join("")}
+  <div class="grid g3" id="t-grid"><p class="muted">Loading tournaments…</p>
     <div class="empty hide span2" data-empty><div class="icon">${ic("trophy")}</div><h3 class="t-h3">No tournaments in this field this week</h3><p class="muted t-sm">New ones drop every Monday. Turn on alerts after you sign up.</p></div>
   </div>
 </div></section>`,
@@ -277,23 +277,19 @@ const pricing = publicPage({
     <div class="card card-lg stack"><div class="label">Free</div><div class="mono t-display">₹0</div><p class="muted t-sm">Everything you need to get ranked and hired.</p>
       <ul style="list-style:none" class="stack t-sm">${["All tournaments", "Verified rank + tier", "Apply to all jobs", "3 drills a week", "Public profile"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
       <a class="btn btn-block" href="signup.html">Start free</a></div>
-    <div class="card card-lg blue stack" style="box-shadow:8px 8px 0 var(--ink)"><div class="row between"><div class="label">Pro</div><span class="badge dark">Most picked</span></div><div><span class="mono t-display">₹199</span><span class="t-sm"> / month</span></div><p class="t-sm muted">₹99 with student ID.</p>
-      <ul style="list-style:none" class="stack t-sm">${["Everything in Free", "Unlimited drills", "Task-by-task score breakdown", "Priority fast-track queue", "See who viewed your rank", "Top-10% interview guarantee"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
-      <button class="btn btn-dark btn-block" data-modal="upgrade-modal">Go Pro</button></div>
+    <div class="card card-lg blue stack" style="box-shadow:8px 8px 0 var(--ink)"><div class="row between"><div class="label">Pro</div><span class="badge dark">Coming soon</span></div><div><span class="mono t-display">₹199</span><span class="t-sm"> / month</span></div><p class="t-sm muted">₹99 with student ID.</p>
+      <ul style="list-style:none" class="stack t-sm">${["Everything in Free", "Unlimited drills", "Task-by-task score breakdown", "Priority fast-track queue", "See who viewed your rank"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
+      <button class="btn btn-dark btn-block" data-modal="upgrade-modal">Join the Pro waitlist</button></div>
     <div class="card card-lg dark stack"><div class="label" style="color:#9DB1FF">Campus</div><div class="mono t-display">Free</div><p class="muted t-sm">For placement cells and college clubs.</p>
       <ul style="list-style:none" class="stack t-sm">${["Private college tournaments", "Batch rank reports", "Pro for every student at ₹49", "Placement officer dashboard"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
       <a class="btn btn-primary btn-block" href="contact.html">Bring to my college</a></div>
   </div>
-  <p class="t-xs muted center mt4">Prices include GST. Cancel anytime from Settings. Top-10% guarantee: finish a tournament in the top 10%, get no interview in 60 days, and Pro is free for life.</p>
+  <p class="t-xs muted center mt4">Planned prices, including GST. Pro and Campus aren't on sale during the pilot — everything you need to compete and get ranked is free.</p>
 </div></section>
 <div class="modal" id="upgrade-modal" role="dialog" aria-modal="true" aria-labelledby="up-h"><div class="card card-lg stack">
-  <div class="row between"><h2 class="t-h2" id="up-h">Go Pro</h2><button class="icon-btn" data-close-modal aria-label="Close">${ic("x")}</button></div>
-  <div class="grid g2">
-    <button class="option selected" aria-pressed="true"><div class="label">Monthly</div><div class="mono t-h3 mt1">₹199</div></button>
-    <button class="option"><div class="label">Yearly · save 33%</div><div class="mono t-h3 mt1">₹1,599</div></button>
-  </div>
-  <p class="t-sm muted">Payment is disabled in this prototype. In production this opens UPI / card checkout.</p>
-  <button class="btn btn-primary btn-block btn-lg" data-close-modal data-toast="Prototype: payment would open here">Continue to pay</button>
+  <div class="row between"><h2 class="t-h2" id="up-h">Pro is coming after the pilot</h2><button class="icon-btn" data-close-modal aria-label="Close">${ic("x")}</button></div>
+  <p class="t-sm muted">Nothing is for sale yet and we won't ask for payment. Everything you need to compete, get ranked and apply is free. Tell us you're interested and we'll email you when Pro opens.</p>
+  <div class="row"><a class="btn btn-primary" href="contact.html">Tell me when it opens</a><button class="btn" data-close-modal>Close</button></div>
 </div></div>`,
 });
 
