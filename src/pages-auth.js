@@ -17,14 +17,15 @@ const authSide = (title, body) => `
 </aside>`;
 
 const googleBtn = `<button class="btn btn-lg btn-block" type="button" data-google><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.7V6.6h-4a12 12 0 0 0 0 10.8z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg> Continue with Google</button>
-<div class="divider">or with an email code</div>`;
+<div class="divider">or with your email</div>`;
 
 // Passwordless: Google, or a one-time code / magic link sent to the email.
 const codeStep = `
 <form class="stack hide" id="code-form" novalidate>
-  <div class="card soft"><div class="row">${ic("mail")}<p class="t-sm">We sent a sign-in link and code to <strong id="sent-to"></strong>. Click the link, or type the code here. It expires in 1 hour.</p></div></div>
-  <div class="field"><label for="a-code">Code from the email</label><input class="input mono" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required></div>
-  <button class="btn btn-primary btn-lg btn-block" type="submit">Continue ${ic("arrow")}</button>
+  <div class="card soft"><div class="row">${ic("mail")}<p class="t-sm">We sent a sign-in link to <strong id="sent-to"></strong>. Open it <strong>in this browser</strong> to continue. It expires in 1 hour — check spam if it hasn't arrived in a minute.</p></div></div>
+  <details class="t-sm"><summary class="muted" style="cursor:pointer">Email shows a code instead?</summary>
+    <div class="stack mt2"><div class="field"><label for="a-code">Code from the email</label><input class="input mono" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
+    <button class="btn btn-primary btn-block" type="submit">Continue ${ic("arrow")}</button></div></details>
   <button class="btn btn-ghost btn-block" type="button" id="a-resend">Use a different email or resend</button>
 </form>`;
 
@@ -38,7 +39,7 @@ const login = barePage({
   <form class="stack" id="otp-form" novalidate>
     ${googleBtn}
     <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a sign-in code ${ic("arrow")}</button>
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a sign-in link ${ic("arrow")}</button>
     <p class="t-xs muted">No passwords to remember or leak. Recruiter? Employer accounts are invite-only during the pilot — <a class="link" href="employers.html">request access</a>.</p>
   </form>
   ${codeStep}
@@ -58,7 +59,7 @@ const signup = barePage({
     <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
     <label class="check"><input type="checkbox" id="a-terms"> <span>I agree to the <a class="link" href="terms.html">Terms</a> and <a class="link" href="privacy.html">Privacy policy</a>, including fair-play checks.</span></label>
     <button class="btn btn-primary btn-lg btn-block" type="submit">Create account ${ic("arrow")}</button>
-    <p class="t-xs muted">We'll email you a code to verify the address. Your profile is private until you choose to make it public.</p>
+    <p class="t-xs muted">We'll email you a link to verify the address. Your profile is private until you choose to make it public.</p>
   </form>
   ${codeStep}
 </div></div></div>`,
@@ -70,7 +71,7 @@ const forgot = barePage({
 <div class="auth">${authSide("Locked out? Not possible here.", "Rank Culture doesn't use passwords, so there's nothing to reset.")}
 <div class="auth-form"><div class="stack-lg">
   <a class="link" href="login.html">${ic("back")} Back to log in</a>
-  <div class="stack"><h1 class="t-h1">Just log in with a code</h1><p class="muted">Enter your email on the log-in page and we'll send a fresh one-time code. Signed up with Google? Use the Google button.</p></div>
+  <div class="stack"><h1 class="t-h1">Just log in with a link</h1><p class="muted">Enter your email on the log-in page and we'll send a fresh sign-in link. Signed up with Google? Use the Google button.</p></div>
   <a class="btn btn-primary btn-lg btn-block" href="login.html">Go to log in</a>
   <p class="t-sm muted">Lost access to your email? <a class="link" href="contact.html">Contact support</a>.</p>
 </div></div></div>`,

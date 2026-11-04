@@ -170,7 +170,7 @@ function authPage(mode) {
     if (error) { $("#auth-msg").innerHTML = `<div class="banner red">${esc(friendly(error))}</div>`; return; }
     $("#auth-msg").innerHTML = "";
     $("#sent-to").textContent = email;
-    form.classList.add("hide"); codeForm.classList.remove("hide"); $("#a-code").focus();
+    form.classList.add("hide"); codeForm.classList.remove("hide");
   });
   codeForm.addEventListener("submit", async e => {
     e.preventDefault();
@@ -200,7 +200,7 @@ H["auth-callback.html"] = async () => {
   const err = p.get("error_description") || hp.get("error_description");
   if (err) return go("login.html?error=" + encodeURIComponent(err));
   const { data: { session }, error } = await sb.auth.getSession();
-  if (error || !session) return go("login.html?error=" + encodeURIComponent(error ? friendly(error) : "That sign-in link has expired or was opened in a different browser. Request a new one, or use the 6-digit code."));
+  if (error || !session) return go("login.html?error=" + encodeURIComponent(error ? friendly(error) : "That sign-in link has expired or was opened in a different browser. Request a new one, and open it in the same browser you requested it from."));
   return afterSignIn();
 };
 
