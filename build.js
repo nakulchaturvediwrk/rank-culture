@@ -58,7 +58,9 @@ const DEP = path.join(__dirname, "deploy");
 fs.rmSync(DEP, { recursive: true, force: true }); fs.mkdirSync(path.join(DEP, "assets"), { recursive: true });
 for (const f of ["site.js", "app.js", "styles.css", "favicon.svg"]) fs.copyFileSync(path.join(OUT, "assets", f), path.join(DEP, "assets", f));
 const idx = fs.readFileSync(path.join(OUT, "index.html"), "utf8").replace('RCBODY("index.html")', "RCBODY()");
-fs.writeFileSync(path.join(DEP, "index.html"), idx);
+// Cache-bust the entry assets so a new deploy is picked up immediately.
+const ver = require("crypto").createHash("sha1").update(fs.readFileSync(path.join(DEP, "assets/site.js"))).update(fs.readFileSync(path.join(DEP, "assets/styles.css"))).digest("hex").slice(0, 10);
+fs.writeFileSync(path.join(DEP, "index.html"), idx.replace("assets/site.js", `assets/site.js?v=${ver}`).replace("assets/styles.css", `assets/styles.css?v=${ver}`));
 { const v = JSON.parse(fs.readFileSync(path.join(__dirname, "vercel.json"), "utf8")); fs.writeFileSync(path.join(DEP, "vercel.json"), JSON.stringify({ rewrites: v.rewrites, headers: v.headers }, null, 2)); }
 console.log(`Built ${names.size} pages → dist/`);
 if (problems.length) { console.log(`\n${problems.length} design-system problems:\n` + problems.join("\n")); process.exit(1); }
