@@ -252,7 +252,7 @@ const offline = barePage({
     <h1 class="t-h1">We can't reach the server</h1>
     <p class="lead">Your answers are saved on this device. The timer is paused for up to 5 minutes while you reconnect — you won't lose time.</p>
     <div class="list t-sm"><div><span>Answers saved locally</span><span class="green">${ic("check")}</span></div><div><span>Timer paused</span><span class="mono">4:51 left</span></div><div><span>Proctoring</span><span class="amber">Paused</span></div></div>
-    <div class="row"><a class="btn btn-primary" href="live.html">Retry now</a><a class="btn" href="contact.html">Contact support</a></div>
+    <div class="row"><a class="btn btn-primary" href="javascript:history.back()">Retry now</a><a class="btn" href="contact.html">Contact support</a></div>
   </div>
 </div></section>`,
 });

@@ -101,7 +101,7 @@ const appNav = [
   ["applications.html", "Applications", "file"],
   ["leaderboard-app.html", "Leaderboard", "chart"],
   ["profile.html", "My profile", "user"],
-  ["messages.html", "Messages", "mail", 2],
+  ["messages.html", "Messages", "mail"],
   ["network.html", "Rank feed", "users"],
 ];
 const appHeader = (active) => `
@@ -112,9 +112,9 @@ const appHeader = (active) => `
   </nav>
   <div class="header-actions">
     <a class="btn btn-sm hide-m" href="pricing.html?from=app">Go Pro</a>
-    <a class="icon-btn" href="notifications.html" aria-label="Notifications, 3 unread">${ic("bell")}<span class="dot"></span></a>
+    <a class="icon-btn" href="notifications.html" aria-label="Notifications">${ic("bell")}</a>
     <a class="icon-btn hide-m" href="settings.html" aria-label="Settings">${ic("gear")}</a>
-    <a class="avatar hide-m" href="profile.html" aria-label="My profile">${ME.initials}</a>
+    <a class="avatar hide-m" href="profile.html" aria-label="My profile" data-me="initials">··</a>
     <button class="icon-btn menu-btn" data-open-drawer aria-label="Open menu">${ic("menu")}</button>
   </div>
 </div></header>
@@ -125,29 +125,29 @@ const appHeader = (active) => `
   <a class="dl" href="notifications.html">Notifications</a>
   <a class="dl" href="settings.html">Settings</a>
   <a class="dl" href="map.html">Prototype screen map</a>
-  <a class="dl" href="index.html">Log out</a>
+  <a class="dl" href="index.html" data-logout>Log out</a>
 </div></div>`;
 
 const sidebar = (active) => `
 <aside class="sidebar" aria-label="App navigation">
   <a class="rank-pill" href="profile.html">
-    <span class="avatar">${ME.initials}</span>
-    <span><span class="label muted">${ME.tier} · ${ME.pct}</span><br><span class="mono">${ME.score}</span><span class="mono muted t-xs"> / 1000</span></span>
+    <span class="avatar" data-me="initials">··</span>
+    <span><span class="label muted" data-me="tier">Unranked</span><br><span class="mono" data-me="score">—</span><span class="mono muted t-xs"> / 1000</span></span>
   </a>
   <nav class="side-nav">
     ${appNav.map(([h, l, i, c]) => `<a href="${h}"${h === active ? ' class="active" aria-current="page"' : ""}>${ic(i)}${l}${c ? `<span class="count">${c}</span>` : ""}</a>`).join("")}
   </nav>
   <div style="margin-top:auto" class="stack">
-    <div class="card dark" style="padding:var(--s4)">
+    <div class="card dark hide" style="padding:var(--s4)" data-me="next">
       <div class="label" style="color:#9DB1FF">Next tournament</div>
-      <div class="t-sm mt1" style="font-weight:700">Growth Marketing Cup</div>
-      <div class="t-xs muted">Sat 25 Oct · 7:00 PM IST</div>
-      <a class="btn btn-primary btn-sm btn-block mt2" href="tournament.html">View</a>
+      <div class="t-sm mt1" style="font-weight:700" data-me="next-name"></div>
+      <div class="t-xs muted" data-me="next-when"></div>
+      <a class="btn btn-primary btn-sm btn-block mt2" href="arena.html" data-me="next-link">View</a>
     </div>
     <div class="side-nav">
       <a href="settings.html"${active === "settings.html" ? ' class="active"' : ""}>${ic("gear")}Settings</a>
       <a href="contact.html">${ic("mail")}Support</a>
-      <a href="index.html">${ic("logout")}Log out</a>
+      <a href="index.html" data-logout>${ic("logout")}Log out</a>
     </div>
   </div>
 </aside>`;

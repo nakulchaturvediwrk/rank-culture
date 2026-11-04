@@ -253,7 +253,7 @@ const drills = appPage({
 ${pageHead("No courses. Just reps.", "Drills", "15-minute real tasks, picked from your weakest skills. Each one is scored and adds points to your rank.", `<span class="badge">3 of 3 free drills left this week</span>`)}
 <div class="card dark card-lg mb3"><div class="grid g2" style="align-items:center">
   <div class="stack"><div class="label" style="color:#9DB1FF">Recommended for you</div><h2 class="t-h2">SEO is costing you the most points</h2><p class="muted t-sm">You scored 52/100 on SEO — 30 below Elite average. These 3 drills target exactly that.</p></div>
-  <div class="row" style="justify-content:flex-end"><a class="btn btn-primary btn-lg" href="live.html">Start drill 1 of 3</a></div>
+  <div class="row" style="justify-content:flex-end"><a class="btn btn-primary btn-lg" href="tournament.html?t=practice">Start a warm-up</a></div>
 </div></div>
 <div class="row mb3" data-filter-group="#d-grid" role="group" aria-label="Filter drills">
   ${[["all", "All"], ["weak", "My weak spots"], ["seo", "SEO"], ["copy", "Copywriting"], ["data", "Funnels & data"], ["ads", "Paid ads"]].map(([v, l], i) => `<button class="chip ${i === 0 ? "on" : ""}" data-value="${v}" aria-pressed="${i === 0}">${l}</button>`).join("")}
@@ -265,7 +265,7 @@ ${pageHead("No courses. Just reps.", "Drills", "15-minute real tasks, picked fro
      ["copy", "Rewrite a failing push notification", "Copywriting", "10 min", "+4–6", "A push with 0.8% CTR. Write three that beat it."],
      ["ads", "Cut a ₹50k budget by 30%", "Paid ads", "15 min", "+6–9", "Five campaigns, one spreadsheet. Decide what to pause."],
      ["data", "Cohort retention in Sheets", "Funnels & data", "15 min", "+7–10", "Build a retention table from raw orders. Spot the drop-off week."]]
-    .map(([cat, h, sk, d, pts, p]) => `<article class="card hover stack" data-cat="${cat}"><div class="row between"><span class="badge">${sk}</span><span class="mono t-sm green">${pts} pts</span></div><h3 class="t-h3">${h}</h3><p class="t-sm muted">${p}</p><div class="row between mt1"><span class="t-xs muted">${ic("clock")} ${d}</span><a class="btn btn-sm btn-dark" href="live.html">Start</a></div></article>`).join("")}
+    .map(([cat, h, sk, d, pts, p]) => `<article class="card hover stack" data-cat="${cat}"><div class="row between"><span class="badge">${sk}</span><span class="mono t-sm green">${pts} pts</span></div><h3 class="t-h3">${h}</h3><p class="t-sm muted">${p}</p><div class="row between mt1"><span class="t-xs muted">${ic("clock")} ${d}</span><a class="btn btn-sm btn-dark" href="tournament.html?t=practice">Start</a></div></article>`).join("")}
   <div class="empty hide span2" data-empty><div class="icon">${ic("bolt")}</div><h3 class="t-h3">No drills here</h3></div>
 </div>
 <div class="banner mt4"><span><strong>Why no courses?</strong> Watching videos doesn't move your rank. Doing the work does. Every drill is a task someone does in their first 90 days on the job.</span><a class="btn btn-sm" href="pricing.html?from=app">Unlimited drills with Pro</a></div>`,

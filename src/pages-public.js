@@ -101,7 +101,7 @@ const index = publicPage({
 
 <section class="section"><div class="container">
   <div class="sec-head"><h2 class="t-h1">This week's tournaments</h2><a class="link" href="tournaments.html">All tournaments →</a></div>
-  <div class="grid g3">${TOURNAMENTS.slice(0, 3).map(t => tournamentCard(t, "signup.html")).join("")}</div>
+  <div class="grid g3" id="home-t">${TOURNAMENTS.slice(0, 3).map(t => tournamentCard(t, "signup.html")).join("")}</div>
 </div></section>
 
 <section class="section"><div class="container grid g2" style="gap:var(--s7);align-items:start">
@@ -181,7 +181,7 @@ const tournamentsPublic = publicPage({
   active: "tournaments.html",
   body: `
 <section class="hero" style="padding-bottom:var(--s7)"><div class="container stack">
-  <span class="badge red live">1 tournament live now</span>
+  <span class="badge red live" data-live-count>Tournaments live now</span>
   <h1 class="t-display">Tournaments</h1>
   <p class="lead">Real work, real time, real ranks. Every tournament is free to enter. Top finishers win interview fast-tracks with hiring partners.</p>
 </div></section>

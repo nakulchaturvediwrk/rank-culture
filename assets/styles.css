@@ -358,3 +358,9 @@ textarea.input { min-height: 120px; resize: vertical; }
 .proto-flag { position: fixed; right: 12px; bottom: 12px; z-index: 60; background: var(--amber-soft); border: 1.5px solid var(--amber); color: var(--amber); padding: 4px 10px; font-family: var(--f-display); font-size: var(--t-xs); font-weight: 700; text-transform: uppercase; }
 .proto-flag:hover { background: var(--amber); color: #fff; }
 @media (max-width: 960px) { .proto-flag { display: none; } }
+
+/* Live app layouts */
+.rc-split { grid-template-columns: minmax(0, 1fr) 360px; gap: var(--s6); align-items: start; }
+.rc-sticky { position: sticky; top: 88px; }
+@media (max-width: 960px) { .rc-split { grid-template-columns: 1fr; } .rc-sticky { position: static; } }
+button:disabled, .btn[disabled] { opacity: .55; cursor: not-allowed; }

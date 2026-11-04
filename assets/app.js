@@ -16,11 +16,15 @@
   $$("[data-close-drawer]").forEach(b => b.addEventListener("click", () => { drawer.classList.remove("open"); drawer.setAttribute("aria-hidden", "true"); }));
   document.addEventListener("keydown", e => { if (e.key === "Escape") { drawer && drawer.classList.remove("open"); $$(".modal.open").forEach(m => m.classList.remove("open")); } });
 
+  // Per-element behaviours. RCbind(root) re-runs them on content rendered later.
+  function bind(R) {
+    R = R || document;
+    const $$R = sel => $$(sel, R);
   // Generic toast buttons
-  $$("[data-toast]").forEach(b => b.addEventListener("click", e => { if (b.tagName === "A" && b.getAttribute("href") === "#") e.preventDefault(); toast(b.dataset.toast); }));
+  $$R("[data-toast]").forEach(b => b.addEventListener("click", e => { if (b.tagName === "A" && b.getAttribute("href") === "#") e.preventDefault(); toast(b.dataset.toast); }));
 
   // Chip filters: single-select groups, filter targets by data-cat
-  $$("[data-filter-group]").forEach(group => {
+  $$R("[data-filter-group]").forEach(group => {
     const target = $(group.dataset.filterGroup);
     $$(".chip", group).forEach(chip => chip.addEventListener("click", () => {
       $$(".chip", group).forEach(c => { c.classList.remove("on"); c.setAttribute("aria-pressed", "false"); });
@@ -33,7 +37,7 @@
   });
 
   // Search filter on lists
-  $$("[data-search]").forEach(inp => {
+  $$R("[data-search]").forEach(inp => {
     const target = $(inp.dataset.search);
     inp.addEventListener("input", () => {
       const q = inp.value.trim().toLowerCase();
@@ -44,7 +48,7 @@
   });
 
   // Tabs: [data-tabs] buttons with data-tab="id" show #id panels
-  $$("[data-tabs]").forEach(tabs => {
+  $$R("[data-tabs]").forEach(tabs => {
     const btns = $$("button", tabs);
     btns.forEach(b => b.addEventListener("click", () => {
       btns.forEach(x => { x.classList.remove("on"); x.setAttribute("aria-selected", "false"); const p = document.getElementById(x.dataset.tab); if (p) p.classList.add("hide"); });
@@ -54,14 +58,14 @@
   });
 
   // Toggles
-  $$(".toggle").forEach(t => t.addEventListener("click", () => {
+  $$R(".toggle").forEach(t => t.addEventListener("click", () => {
     const on = t.getAttribute("aria-checked") === "true";
     t.setAttribute("aria-checked", String(!on));
     if (t.dataset.label) toast(`${t.dataset.label} ${on ? "off" : "on"}`);
   }));
 
   // Option tiles: single (data-single) or multi select within a [data-options] group
-  $$("[data-options]").forEach(g => {
+  $$R("[data-options]").forEach(g => {
     const multi = g.dataset.options === "multi";
     const next = g.dataset.next ? $(g.dataset.next) : null;
     const update = () => { if (next) next.toggleAttribute("disabled", !$$(".option.selected", g).length); const c = g.dataset.count && $(g.dataset.count); if (c) c.textContent = $$(".option.selected", g).length; };
@@ -75,11 +79,11 @@
   });
 
   // Modals
-  $$("[data-modal]").forEach(b => b.addEventListener("click", e => { e.preventDefault(); const m = document.getElementById(b.dataset.modal); if (m) m.classList.add("open"); }));
-  $$(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m || e.target.closest("[data-close-modal]")) m.classList.remove("open"); }));
+  $$R("[data-modal]").forEach(b => b.addEventListener("click", e => { e.preventDefault(); const m = document.getElementById(b.dataset.modal); if (m) m.classList.add("open"); }));
+  $$R(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m || e.target.closest("[data-close-modal]")) m.classList.remove("open"); }));
 
   // Countdown timers: data-countdown="seconds"
-  $$("[data-countdown]").forEach(el => {
+  $$R("[data-countdown]").forEach(el => {
     let s = parseInt(el.dataset.countdown, 10);
     const fmt = n => { const h = Math.floor(n / 3600), m = Math.floor((n % 3600) / 60), x = n % 60; return (h ? String(h).padStart(2, "0") + ":" : "") + String(m).padStart(2, "0") + ":" + String(x).padStart(2, "0"); };
     el.textContent = fmt(s);
@@ -87,10 +91,10 @@
   });
 
   // Password visibility
-  $$("[data-reveal]").forEach(b => b.addEventListener("click", () => { const i = $(b.dataset.reveal); i.type = i.type === "password" ? "text" : "password"; b.textContent = i.type === "password" ? "Show" : "Hide"; }));
+  $$R("[data-reveal]").forEach(b => b.addEventListener("click", () => { const i = $(b.dataset.reveal); i.type = i.type === "password" ? "text" : "password"; b.textContent = i.type === "password" ? "Show" : "Hide"; }));
 
   // Simple forms that navigate on submit (prototype)
-  $$("form[data-go]").forEach(f => f.addEventListener("submit", e => {
+  $$R("form[data-go]").forEach(f => f.addEventListener("submit", e => {
     e.preventDefault();
     let ok = true;
     $$("[required]", f).forEach(i => { const bad = !i.value.trim() || (i.type === "email" && !/^\S+@\S+\.\S+$/.test(i.value)); i.classList.toggle("error", bad); const m = i.parentElement.querySelector(".err"); if (m) m.classList.toggle("hide", !bad); if (bad) ok = false; });
@@ -100,16 +104,24 @@
   }));
 
   // Messages: switch thread
-  $$("[data-thread]").forEach(b => b.addEventListener("click", () => {
+  $$R("[data-thread]").forEach(b => b.addEventListener("click", () => {
     $$("[data-thread]").forEach(x => x.classList.remove("on")); b.classList.add("on");
     $$(".thread-pane").forEach(p => p.classList.add("hide"));
     const p = document.getElementById(b.dataset.thread); if (p) p.classList.remove("hide");
   }));
-  $$("form[data-send]").forEach(f => f.addEventListener("submit", e => {
+  $$R("form[data-send]").forEach(f => f.addEventListener("submit", e => {
     e.preventDefault(); const i = $("input", f); if (!i.value.trim()) return;
     const body = f.closest(".thread").querySelector(".thread-body");
     const m = document.createElement("div"); m.className = "msg me"; m.textContent = i.value; body.appendChild(m); i.value = ""; body.scrollTop = body.scrollHeight;
   }));
+
+  // Role switcher on dashboard
+  $$R("[data-role-switch]").forEach(sel => sel.addEventListener("change", () => {
+    $$("[data-role]").forEach(p => p.classList.toggle("hide", p.dataset.role !== sel.value));
+  }));
+  }
+  window.RCbind = bind;
+  bind(document);
 
   // Arena: question navigation
   const arena = $("[data-arena]");
@@ -140,8 +152,4 @@
   const retry = $("[data-retry]");
   if (retry) { let s = 15; const tick = () => { retry.textContent = s; if (s-- <= 0) { s = 15; toast("Still offline — retrying"); } }; tick(); setInterval(tick, 1000); }
 
-  // Role switcher on dashboard
-  $$("[data-role-switch]").forEach(sel => sel.addEventListener("change", () => {
-    $$("[data-role]").forEach(p => p.classList.toggle("hide", p.dataset.role !== sel.value));
-  }));
 })();

@@ -59,7 +59,7 @@ fs.rmSync(DEP, { recursive: true, force: true }); fs.mkdirSync(path.join(DEP, "a
 for (const f of ["site.js", "app.js", "styles.css", "favicon.svg"]) fs.copyFileSync(path.join(OUT, "assets", f), path.join(DEP, "assets", f));
 const idx = fs.readFileSync(path.join(OUT, "index.html"), "utf8").replace('RCBODY("index.html")', "RCBODY()");
 fs.writeFileSync(path.join(DEP, "index.html"), idx);
-fs.writeFileSync(path.join(DEP, "vercel.json"), JSON.stringify({ rewrites: [{ source: "/((?!assets/).*)", destination: "/index.html" }] }));
+{ const v = JSON.parse(fs.readFileSync(path.join(__dirname, "vercel.json"), "utf8")); fs.writeFileSync(path.join(DEP, "vercel.json"), JSON.stringify({ rewrites: v.rewrites, headers: v.headers }, null, 2)); }
 console.log(`Built ${names.size} pages → dist/`);
 if (problems.length) { console.log(`\n${problems.length} design-system problems:\n` + problems.join("\n")); process.exit(1); }
 console.log("Design-system lint: 0 problems ✓");

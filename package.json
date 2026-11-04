@@ -9,5 +9,10 @@
   "scripts": {
     "build": "node build.js"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0"
+  }
 }
