@@ -14,5 +14,14 @@ window.RCBODY = function (file) {
   document.write(html.slice(i, j));
   document.addEventListener("DOMContentLoaded", () => rc.start(file));
 };
-// Define the shell (logo/nav/footer) from the same source, so shell.js isn't needed.
-new Function(require("./layout").shellJS())();
+// Define the shell (logo/nav/footer) from the same source as shell.js — without eval, so CSP can forbid it.
+const SHELL = require("./layout").shellParts();
+const put = (key, active) => {
+  const s = document.currentScript, t = document.createElement("template");
+  t.innerHTML = SHELL[key];
+  if (active) t.content.querySelectorAll(".nav a, .side-nav a, .bottom-nav a").forEach(a => {
+    if (a.getAttribute("href") === active) { a.classList.add("active"); a.setAttribute("aria-current", "page"); }
+  });
+  s.parentNode.insertBefore(t.content, s);
+};
+window.RC = { pub: a => put("pub", a), app: a => put("app", a), side: a => put("side", a), bottom: a => put("bottom", a), foot: () => put("foot") };

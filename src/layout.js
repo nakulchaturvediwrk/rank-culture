@@ -229,4 +229,5 @@ const tierBadge = (score) => {
   return `<span class="badge ${t[1]}">${t[0]}</span>`;
 };
 
-module.exports = { shellJS, logo, LOGO_MARK, ic, head, publicPage, appPage, barePage, bar, pageHead, tierBadge, ME, footer };
+const shellParts = () => ({ pub: publicHeader(""), app: appHeader(""), side: sidebar(""), bottom: bottomNav(""), foot: footer() });
+module.exports = { shellJS, shellParts, logo, LOGO_MARK, ic, head, publicPage, appPage, barePage, bar, pageHead, tierBadge, ME, footer };
