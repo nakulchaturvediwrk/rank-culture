@@ -142,16 +142,16 @@ function publicHeaderSignedIn() {
 }
 
 // ---------- Auth pages ----------
-async function startGoogle(btn) {
-  busy(btn, true, "Opening Google…");
-  const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/auth-callback.html" } });
-  if (error) { busy(btn, false); toast(friendly(error)); }
+async function startOAuth(provider, btn) {
+  busy(btn, true, `Opening ${provider === "github" ? "GitHub" : "Google"}…`);
+  const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: location.origin + "/auth-callback.html" } });
+  if (error) { busy(btn, false); toast(/not enabled|unsupported provider/i.test(error.message) ? `${provider === "github" ? "GitHub" : "Google"} sign-in isn't switched on yet — use your email for now.` : friendly(error)); }
 }
 function authPage(mode) {
   const next = safeNext(params().get("next"));
   try { if (next) localStorage.setItem("rc-next", next); else localStorage.removeItem("rc-next"); } catch (e) {}
   const err = params().get("error"); if (err) $("#auth-msg").innerHTML = `<div class="banner red">${esc(err)}</div>`;
-  $$("[data-google]").forEach(b => b.addEventListener("click", () => startGoogle(b)));
+  $$("[data-oauth]").forEach(b => b.addEventListener("click", () => startOAuth(b.dataset.oauth, b)));
   const form = $("#otp-form"), codeForm = $("#code-form");
   let email = "";
   form.addEventListener("submit", async e => {
@@ -565,7 +565,7 @@ H["settings.html"] = async () => {
     <div class="field"><label for="a-s">I am</label><select class="input" id="a-s">${Object.entries(STAGES).map(([k, v]) => `<option value="${k}"${p.stage === k ? " selected" : ""}>${v}</option>`).join("")}</select></div></div>
     <div class="field"><label for="a-f">Main field</label><select class="input" id="a-f">${FIELD_ORDER.map(k => `<option value="${k}"${p.field === k ? " selected" : ""}>${FIELDS[k]}</option>`).join("")}</select></div>
     <div class="row"><button class="btn btn-primary" type="submit">Save changes</button></div>
-    <div class="bt stack" style="padding-top:var(--s5)"><div class="label muted">Email</div><p class="t-sm"><strong>${esc(ME.user.email)}</strong> · signs in with ${identities.includes("google") ? "Google and email codes" : "email codes"}</p>
+    <div class="bt stack" style="padding-top:var(--s5)"><div class="label muted">Email</div><p class="t-sm"><strong>${esc(ME.user.email)}</strong> · signs in with ${[identities.includes("google") && "Google", identities.includes("github") && "GitHub", "email links"].filter(Boolean).join(", ")}</p>
       <div class="row"><input class="input" id="a-e" type="email" placeholder="New email" style="flex:1;min-width:200px"><button class="btn" type="button" id="a-e-btn">Change email</button></div><p class="t-xs muted">We'll send a confirmation link to both addresses. Nothing changes until you confirm.</p></div></form>
   <div id="s-sec" class="${tab === "s-sec" ? "" : "hide"} stack-lg" style="max-width:640px">
     <div class="card card-lg stack"><div class="row between"><div><h2 class="t-h3">Two-step verification</h2><p class="t-sm muted">Ask for a code from an authenticator app (Google Authenticator, Authy, 1Password) every time you sign in.</p></div>${totp ? '<span class="badge green">On</span>' : '<span class="badge">Off</span>'}</div>
