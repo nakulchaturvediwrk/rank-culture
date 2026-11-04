@@ -144,7 +144,7 @@ const messages = appPage({
 ${pageHead("Recruiters reach you here", "Messages", "")}
 <div class="inbox">
   <div class="inbox-list">${threads.map(([id, co, who, last, t], i) => `<button data-thread="${id}" class="${i === 0 ? "on" : ""}"><span class="avatar">${co.split(" ").map(w => w[0]).join("").slice(0, 2)}</span><span style="flex:1;min-width:0"><span class="row between"><strong class="t-sm">${co}</strong><span class="t-xs muted">${t}</span></span><span class="t-xs muted" style="display:block">${who}</span><span class="t-xs" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last}</span></span></button>`).join("")}</div>
-  ${threads.map(([id, co, who, , , msgs], i) => `<div class="thread thread-pane ${i ? "hide" : ""}" id="${id}"><div class="row between" style="padding:var(--s4);border-bottom:var(--border)"><div><strong>${co}</strong><div class="t-xs muted">${who}</div></div>${i === 0 ? '<span class="badge green">Interview Thu</span>' : ""}</div><div class="thread-body">${msgs.map(([w, m]) => `<div class="msg ${w === "me" ? "me" : ""}">${m}</div>`).join("")}</div><form class="thread-input" data-send><input class="input" placeholder="Write a message" aria-label="Message"><button class="btn btn-primary" type="submit">${ic("send")}</button></form></div>`).join("")}
+  ${threads.map(([id, co, who, , , msgs], i) => `<div class="thread thread-pane ${i ? "hide" : ""}" id="${id}"><div class="row between" style="padding:var(--s4);border-bottom:var(--border)"><div><strong>${co}</strong><div class="t-xs muted">${who}</div></div>${i === 0 ? '<span class="badge green">Interview Thu</span>' : ""}</div><div class="thread-body">${msgs.map(([w, m]) => `<div class="msg ${w === "me" ? "me" : ""}">${m}</div>`).join("")}</div><form class="thread-input" data-send><input class="input" placeholder="Write a message" aria-label="Message"><button class="btn btn-primary" type="submit" aria-label="Send">${ic("send")}</button></form></div>`).join("")}
 </div>`,
 });
 
@@ -232,6 +232,7 @@ const loading = appPage({
   title: "Loading",
   active: "dashboard.html",
   body: `
+<h1 class="sr-only">Loading your dashboard</h1>
 <div class="banner blue mb3 t-sm"><span>Prototype: this is the loading state. It turns into the dashboard in a couple of seconds.</span></div>
 <div data-reveal-after="loaded" data-ms="2600" class="stack-lg" aria-busy="true" aria-label="Loading">
   <div class="skel" style="height:46px;width:320px"></div>
