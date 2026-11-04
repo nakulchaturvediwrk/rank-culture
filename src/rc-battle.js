@@ -3,7 +3,13 @@ module.exports = function install(H, c) {
   const { sb, $, $$, esc, q, render, toast, busy, friendly, modal, main, params, go, ic, pageHead, tierBadge, FIELDS, n, fmt, errorState } = c;
   const DOMAINS = { mixed: "All fields", marketing: "Marketing", data: "Data", product: "Product", sales: "Sales", ops: "Operations", design: "Design", tech: "Tech", hr: "People Ops" };
   const SIZES = [[2, "1v1 Duel", "Head to head. 7 questions."], [4, "4-player", "Squad battle. 8 questions."], [6, "6-player", "Bigger lobby, same clock."], [10, "10-player", "Max chaos. 8 questions."]];
-  const domainSel = (id, val, withMixed = true) => `<select class="input" id="${id}" style="min-height:44px">${Object.entries(DOMAINS).filter(([k]) => withMixed || k !== "mixed").map(([k, v]) => `<option value="${k}"${k === val ? " selected" : ""}>${v}</option>`).join("")}</select>`;
+  const EXTRA = { aptitude: "Aptitude", workstyle: "Work style", consulting: "Consulting" };
+  let PACKS = [];
+  const loadPacks = async () => { if (!PACKS.length) { try { PACKS = await q(sb.rpc("packs_list")); } catch (e) { PACKS = []; } } return PACKS; };
+  const label = d => { if (d && d.startsWith("pack:")) { const p = PACKS.find(x => "pack:" + x.id === d); return p ? p.name : "Company pack"; } return DOMAINS[d] || FIELDS[d] || EXTRA[d] || d; };
+  const packOf = d => (d && d.startsWith("pack:") ? PACKS.find(x => "pack:" + x.id === d) : null);
+  const disclaimer = p => `Original practice questions in the style of ${esc(p.company)}'s publicly described test format. Not affiliated with or endorsed by ${esc(p.company)}; real tests change, so check their careers site.`;
+  const domainSel = (id, val, withMixed = true) => `<select class="input" id="${id}" style="min-height:44px"><optgroup label="Job skills">${Object.entries(DOMAINS).filter(([k]) => withMixed || k !== "mixed").map(([k, v]) => `<option value="${k}"${k === val ? " selected" : ""}>${v}</option>`).join("")}</optgroup>${PACKS.length ? `<optgroup label="Company-style packs">${PACKS.map(p => `<option value="pack:${esc(p.id)}"${"pack:" + p.id === val ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</optgroup>` : ""}</select>`;
   const typeLabel = t => (t === "fff" ? "Fastest Finger" : t === "knockout" ? "Knockout" : "Showdown");
   const mmss = ms => { const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); };
   const until = (iso, now) => { const ms = new Date(iso) - now; return ms > 86400000 ? fmt(iso) : ms > 0 ? "in " + mmss(ms) : "now"; };
@@ -36,7 +42,7 @@ module.exports = function install(H, c) {
     <div class="row between mb3" style="gap:var(--s3)">
       <div class="row" style="gap:var(--s3);flex:1;min-width:240px">
         ${kind === "domain" ? `<label class="sr" for="lb-key">Domain</label><select class="input" id="lb-key" style="max-width:260px;min-height:44px">${Object.entries(FIELDS).map(([k, v]) => `<option value="${k}"${k === key ? " selected" : ""}>${esc(v)}</option>`).join("")}</select>` : ""}
-        ${kind === "skill" ? `<label class="sr" for="lb-key">Skill</label><select class="input" id="lb-key" style="max-width:300px;min-height:44px">${Object.entries(byDomain).map(([d, list]) => `<optgroup label="${esc(FIELDS[d] || d)}">${list.map(s => `<option${s === key ? " selected" : ""}>${esc(s)}</option>`).join("")}</optgroup>`).join("")}</select>` : ""}
+        ${kind === "skill" ? `<label class="sr" for="lb-key">Skill</label><select class="input" id="lb-key" style="max-width:300px;min-height:44px">${Object.entries(byDomain).map(([d, list]) => `<optgroup label="${esc(FIELDS[d] || EXTRA[d] || d)}">${list.map(s => `<option${s === key ? " selected" : ""}>${esc(s)}</option>`).join("")}</optgroup>`).join("")}</select>` : ""}
       </div>
       ${signedIn ? `<div class="row" role="group" aria-label="Region"><a class="chip ${city ? "" : "on"}" href="${url({ city: "" })}">All India</a>${myCity ? `<a class="chip ${city ? "on" : ""}" href="${url({ city: myCity })}">${esc(myCity)}</a>` : ""}</div>`
         : `<form class="row" id="lb-city" style="gap:var(--s2)"><input class="input" name="city" placeholder="Filter by city" value="${esc(city)}" style="max-width:200px;min-height:44px" aria-label="City"><button class="btn">Filter</button>${city ? `<a class="btn btn-ghost" href="${url({ city: "" })}">Clear</a>` : ""}</form>`}
@@ -67,14 +73,14 @@ module.exports = function install(H, c) {
 
   // ---------- Battles hub ----------
   H["battles.html"] = async () => {
-    const hub = await q(sb.rpc("battle_hub")), now = Date.now(), me = c.me();
+    const [hub] = await Promise.all([q(sb.rpc("battle_hub")), loadPacks()]), now = Date.now(), me = c.me();
     let mode = "classic", dom = me.profile.field && DOMAINS[me.profile.field] ? me.profile.field : "mixed";
     const rt = hub.rating;
     const evRow = e => {
       const href = e.type === "knockout" ? `knockout.html?id=${esc(e.id)}` : `battle.html?id=${esc(e.id)}`;
       const live = e.status === "live" || e.status === "running";
       return `<div class="card row between" style="gap:var(--s4)"><div class="stack" style="gap:var(--s1);flex:1;min-width:220px">
-        <div class="row" style="gap:var(--s2)"><span class="badge ${e.type === "knockout" ? "blue" : e.type === "fff" ? "amber" : ""}">${typeLabel(e.type)}</span><span class="badge">${esc(DOMAINS[e.domain] || e.domain)}</span>${e.is_private ? '<span class="badge">Private</span>' : ""}${live ? '<span class="badge red live">Live</span>' : ""}</div>
+        <div class="row" style="gap:var(--s2)"><span class="badge ${e.type === "knockout" ? "blue" : e.type === "fff" ? "amber" : ""}">${typeLabel(e.type)}</span><span class="badge">${esc(label(e.domain))}</span>${e.is_private ? '<span class="badge">Private</span>' : ""}${live ? '<span class="badge red live">Live</span>' : ""}</div>
         <div><strong>${esc(e.title)}</strong></div><div class="t-sm muted">${live ? "Happening now" : fmt(e.starts_at)} · ${n(e.count)}${e.type === "knockout" ? ` of ${e.size} entered` : ` joined`}${e.code ? ` · code <span class="mono">${esc(e.code)}</span>` : ""}</div></div>
         ${e.joined ? `<a class="btn ${live ? "btn-primary" : ""}" href="${href}">${live ? "Enter" : "Joined ✓ · Open"}</a>` : live ? `<a class="btn" href="${href}">${e.type === "knockout" ? "Watch bracket" : "View"}</a>` : `<button class="btn btn-dark" data-ev-join="${esc(e.type)}:${esc(e.id)}">Join</button>`}</div>`;
     };
@@ -94,6 +100,13 @@ module.exports = function install(H, c) {
       <p class="t-sm muted">${rt && rt.played ? `#${n(hub.arena_place)} in the arena · ${rt.wins} win${rt.wins === 1 ? "" : "s"} from ${rt.played} rated battle${rt.played === 1 ? "" : "s"}` : "Starts at 1200. Beat real players to climb."}</p>
       <a class="btn btn-primary btn-block" href="leaderboard-app.html?k=arena">See the arena leaderboard</a></div></div>
 
+    ${PACKS.length ? `<div class="sec-head mt4" style="margin-bottom:var(--s3)"><h2 class="t-h2">Company-style practice</h2></div>
+    <p class="t-sm muted mb3" style="max-width:70ch">Original questions written to match each company's publicly described test format, so you can practise the real thing against the clock. None of these companies wrote, supplied or endorse these questions.</p>
+    <div class="grid g3">${PACKS.map(p => `<div class="card stack"><div class="row between"><span class="badge">${esc(p.company)}</span><span class="mono t-xs muted">${n(p.questions)} Qs</span></div>
+      <h3 class="t-h3">${esc(p.name)}</h3><p class="t-sm muted">${esc(p.blurb)}</p><p class="t-xs muted">${esc(p.sections)}</p>
+      <div class="row" style="gap:var(--s2)"><button class="btn btn-primary btn-sm" data-pack-solo="${esc(p.id)}">Practise vs bots</button><button class="btn btn-sm" data-pack-duel="${esc(p.id)}">Find a 1v1</button></div>
+      ${p.source_url ? `<a class="link t-xs" href="${esc(p.source_url)}" target="_blank" rel="noopener noreferrer">Where the format comes from ↗</a>` : ""}</div>`).join("")}</div>` : ""}
+
     <div class="sec-head mt4" style="margin-bottom:var(--s5)"><h2 class="t-h2">Showdowns, fastest finger & knockouts</h2></div>
     <div class="stack">${hub.events.length ? hub.events.map(evRow).join("") : '<p class="muted">Nothing scheduled this week yet — host one below.</p>'}</div>
 
@@ -112,7 +125,7 @@ module.exports = function install(H, c) {
         <li><strong>Knockouts</strong> — seeded by arena rating. 5-question duels; the winner advances until one champion is left.</li>
         <li>Ties break on total answer time. The answer key never reaches your browser.</li></ul></div></div>
 
-    <div class="mt4"><h2 class="t-h3 mb2">Your recent battles</h2>${hub.recent.length ? `<div class="table-wrap"><table><thead><tr><th>Battle</th><th>Mode</th><th>Finish</th><th style="text-align:right">Rating</th></tr></thead><tbody>${hub.recent.map(r => `<tr><td><a class="link" href="battle.html?id=${esc(r.id)}">${esc(r.title || "Battle")}</a><div class="t-xs muted">${esc(DOMAINS[r.domain] || r.domain)}</div></td><td class="t-sm">${r.scoring === "fff" ? "Fastest finger" : "Classic"}</td><td class="mono">${ordinal(r.place)} / ${r.count}</td><td class="mono ${r.delta > 0 ? "green" : r.delta < 0 ? "red" : "muted"}" style="text-align:right">${r.delta == null ? "Practice" : (r.delta > 0 ? "+" : "") + r.delta}</td></tr>`).join("")}</tbody></table></div>` : '<p class="muted t-sm">No battles yet. Pick a size above and go.</p>'}</div>
+    <div class="mt4"><h2 class="t-h3 mb2">Your recent battles</h2>${hub.recent.length ? `<div class="table-wrap"><table><thead><tr><th>Battle</th><th>Mode</th><th>Finish</th><th style="text-align:right">Rating</th></tr></thead><tbody>${hub.recent.map(r => `<tr><td><a class="link" href="battle.html?id=${esc(r.id)}">${esc(r.title || "Battle")}</a><div class="t-xs muted">${esc(label(r.domain))}</div></td><td class="t-sm">${r.scoring === "fff" ? "Fastest finger" : "Classic"}</td><td class="mono">${ordinal(r.place)} / ${r.count}</td><td class="mono ${r.delta > 0 ? "green" : r.delta < 0 ? "red" : "muted"}" style="text-align:right">${r.delta == null ? "Practice" : (r.delta > 0 ? "+" : "") + r.delta}</td></tr>`).join("")}</tbody></table></div>` : '<p class="muted t-sm">No battles yet. Pick a size above and go.</p>'}</div>
     ${modal("code-modal", "Join with a code", `<form class="stack" id="code-form"><div class="field"><label for="j-code">Invite code</label><input class="input mono" id="j-code" maxlength="8" autocomplete="off" style="text-transform:uppercase"></div><div class="row"><button class="btn" type="button" data-close-modal>Cancel</button><button class="btn btn-primary" type="submit">Join</button></div></form>`)}`);
 
     const help = $("#qm-help");
@@ -123,6 +136,16 @@ module.exports = function install(H, c) {
     $("#qm-dom").addEventListener("change", e => { dom = e.target.value; });
     const launch = async (btn, fn, size) => { busy(btn, true, "Finding…"); try { const id = await q(sb.rpc(fn, { p_size: size, p_scoring: mode, p_domain: dom })); location.href = `battle.html?id=${id}`; } catch (e) { busy(btn, false); toast(friendly(e)); } };
     $$("[data-quick]").forEach(b => b.addEventListener("click", () => launch(b, "battle_quick", Number(b.dataset.quick))));
+    $$("[data-pack-solo]").forEach(b => b.addEventListener("click", async () => {
+      busy(b, true, "Starting…");
+      try { const id = await q(sb.rpc("battle_room", { p_size: 4, p_scoring: "classic", p_domain: "pack:" + b.dataset.packSolo })); await q(sb.rpc("battle_start_now", { p_id: id, p_fill: true })); location.href = `battle.html?id=${id}`; }
+      catch (e) { busy(b, false); toast(friendly(e)); }
+    }));
+    $$("[data-pack-duel]").forEach(b => b.addEventListener("click", async () => {
+      busy(b, true, "Finding…");
+      try { const id = await q(sb.rpc("battle_quick", { p_size: 2, p_scoring: "classic", p_domain: "pack:" + b.dataset.packDuel })); location.href = `battle.html?id=${id}`; }
+      catch (e) { busy(b, false); toast(friendly(e)); }
+    }));
     $$("[data-room]").forEach(b => b.addEventListener("click", () => launch(b, "battle_room", Number(b.dataset.room))));
     $$("[data-ev-join]").forEach(b => b.addEventListener("click", async () => {
       const [type, id] = b.dataset.evJoin.split(":"); busy(b, true, "Joining…");
@@ -161,10 +184,11 @@ module.exports = function install(H, c) {
       history.replaceState(null, "", `battle.html?id=${id}`);
     }
     if (!id) return go("battles.html");
+    await loadPacks();
     const root = main();
     let st = null, offset = 0, phase = "", pollT = null, sending = false; const mine = {};
     const now = () => Date.now() + offset;
-    root.innerHTML = `<div class="stack-lg"><div class="card dark row between" style="gap:var(--s4)" id="bt-top"></div><div class="grid rc-split"><div id="bt-stage" class="stack-lg"></div><aside class="card card-lg stack rc-sticky" id="bt-board"></aside></div></div>`;
+    root.innerHTML = `<div class="stack-lg"><div class="card dark row between" style="gap:var(--s4)" id="bt-top"></div><div class="grid rc-split"><div class="stack-lg"><div id="bt-stage" class="stack-lg"></div><p class="t-xs muted hide" id="bt-disc"></p></div><aside class="card card-lg stack rc-sticky" id="bt-board"></aside></div></div>`;
     const top = $("#bt-top"), stage = $("#bt-stage"), board = $("#bt-board");
 
     const timerTarget = () => {
@@ -178,7 +202,7 @@ module.exports = function install(H, c) {
     const drawTop = () => {
       const idx = st.question ? st.question.index : st.reveal ? st.reveal.index : null;
       top.innerHTML = `<div class="stack" style="gap:var(--s1)"><div class="label" style="color:#9DB1FF">${esc(st.title || "Battle")}${st.knockout_id ? " · Knockout" : ""}</div>
-        <div class="row t-sm" style="gap:var(--s2)"><span class="badge">${st.scoring === "fff" ? "Fastest finger" : "Classic"}</span><span class="badge">${esc(DOMAINS[st.domain] || st.domain)}</span>${st.status === "live" ? '<span class="badge red live">Live</span>' : ""}${st.status === "live" && !st.ranked ? '<span class="badge">Practice · unranked</span>' : ""}</div></div>
+        <div class="row t-sm" style="gap:var(--s2)"><span class="badge">${st.scoring === "fff" ? "Fastest finger" : "Classic"}</span><span class="badge">${esc(label(st.domain))}</span>${st.status === "live" ? '<span class="badge red live">Live</span>' : ""}${st.status === "live" && !st.ranked ? '<span class="badge">Practice · unranked</span>' : ""}</div></div>
         ${idx != null ? `<div class="q-dots" aria-label="Questions">${Array.from({ length: st.n_q }, (_, i) => `<span class="${i < idx ? "done" : i === idx ? "cur" : ""}">${i + 1}</span>`).join("")}</div>` : ""}
         <div class="timer" id="bt-timer" aria-live="off">${timerTarget() ? "--:--" : ""}</div>`;
     };
@@ -262,6 +286,7 @@ module.exports = function install(H, c) {
     const draw = () => {
       const key = [st.status, st.count, st.me, st.question ? "q" + st.question.index + ":" + st.question.my_choice : "", st.reveal ? "r" + st.reveal.index : "", st.status === "live" && now() < new Date(st.started_at) ? "c" : ""].join("|");
       drawTop(); drawBoard();
+      const pk = packOf(st.domain), dc = $("#bt-disc"); if (pk && dc && dc.classList.contains("hide")) { dc.innerHTML = disclaimer(pk); dc.classList.remove("hide"); }
       if (key !== phase) { phase = key; drawStage(); }
     };
     // Local clock: timers and countdowns tick between polls; a phase boundary triggers an early poll.
@@ -289,6 +314,7 @@ module.exports = function install(H, c) {
     let id = params().get("id"); const code = params().get("code");
     if (code) { id = await q(sb.rpc("ko_join", { p_code: code })); history.replaceState(null, "", `knockout.html?id=${id}`); }
     if (!id) return go("battles.html");
+    await loadPacks();
     let k = null, offset = 0, t = null;
     const now = () => Date.now() + offset;
     const roundName = (r, R) => (r === R ? "Final" : r === R - 1 ? "Semi-finals" : r === R - 2 ? "Quarter-finals" : `Round ${r}`);
@@ -299,7 +325,7 @@ module.exports = function install(H, c) {
       const rounds = Array.from({ length: R }, (_, i) => Array.from({ length: k.bracket >> (i + 1) }, (_, j) => k.matches.find(m => m.round === i + 1 && m.slot === j + 1) || { round: i + 1, slot: j + 1, pending: true }));
       const pRow = (name, me, win, score, bye) => `<div class="p${win ? " win" : ""}${me ? " me" : ""}"><span>${bye ? '<span class="muted">Bye</span>' : esc(name || "TBD")}${me ? " (you)" : ""}</span><span class="mono">${score != null ? score : ""}${win ? " ✓" : ""}</span></div>`;
       render(`<a class="link" href="battles.html">${ic("back")} All battles</a>
-      <div class="card card-lg stack mt3"><div class="row" style="gap:var(--s2)"><span class="badge blue">Knockout</span><span class="badge">${esc(DOMAINS[k.domain] || k.domain)}</span>${k.is_private ? '<span class="badge">Private</span>' : ""}${k.status === "running" ? '<span class="badge red live">Live</span>' : ""}</div>
+      <div class="card card-lg stack mt3"><div class="row" style="gap:var(--s2)"><span class="badge blue">Knockout</span><span class="badge">${esc(label(k.domain))}</span>${k.is_private ? '<span class="badge">Private</span>' : ""}${k.status === "running" ? '<span class="badge red live">Live</span>' : ""}</div>
         <h1 class="t-h1">${esc(k.title)}</h1>
         <p class="lead">${k.status === "open" ? `Starts ${fmt(k.starts_at)} · <span id="ko-when"></span>. ${n(k.entries.length)} of ${k.size} entered.` : k.status === "cancelled" ? "Cancelled — fewer than 2 players entered." : k.status === "finished" ? `Champion: <strong>${esc(k.champion)}</strong>` : `${n(k.entries.length)} players · ${R} round${R === 1 ? "" : "s"} · 5-question duels`}</p>
         ${k.code ? `<div class="banner blue"><span>Invite code <strong class="mono">${esc(k.code)}</strong></span><button class="btn btn-sm" id="ko-copy">Copy invite link</button></div>` : ""}
