@@ -108,8 +108,8 @@ const index = publicPage({
   <div class="stack">
     <div class="sec-head" style="margin-bottom:var(--s4)"><h2 class="t-h1">National leaderboard</h2></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>#</th><th>Name</th><th>Skill</th><th style="text-align:right">Score</th></tr></thead>
-      <tbody>${LEADERS.slice(0, 5).map((l, i) => `<tr><td class="rank-pos">${String(i + 1).padStart(2, "0")}</td><td><strong>${l[0]}</strong><div class="t-xs muted">${l[1]}</div></td><td class="t-sm">${l[2]}</td><td class="mono" style="text-align:right">${l[3]}</td></tr>`).join("")}</tbody>
+      <thead><tr><th>#</th><th>Name</th><th>Best domain</th><th style="text-align:right">Score</th></tr></thead>
+      <tbody id="home-lb"><tr><td colspan="4" class="muted t-sm">Loading…</td></tr></tbody>
     </table></div>
     <a class="btn btn-block" href="leaderboard.html">View full leaderboard</a>
   </div>
@@ -217,12 +217,12 @@ const leaderboard = publicPage({
   active: "leaderboard.html",
   body: `
 <section class="hero" style="padding-bottom:var(--s7)"><div class="container stack">
-  <span class="badge blue">Updated after every tournament</span>
+  <span class="badge blue">Live · updated after every tournament and battle</span>
   <h1 class="t-display">National leaderboard</h1>
-  <p class="lead">Every score here was earned in a proctored tournament. Names are shown only for candidates who chose to go public.</p>
+  <p class="lead">Overall, by domain, by skill and in the battle arena. Names are shown only for people who chose to go public.</p>
 </div></section>
-<section class="section"><div class="container">${leaderTable(false)}
-  <div class="banner blue mt4"><span><strong>Want your name here?</strong> The next tournament starts Saturday.</span><a class="btn btn-primary" href="signup.html">Get ranked free</a></div>
+<section class="section"><div class="container"><div id="lb-root"><p class="muted">Loading the leaderboard…</p></div>
+  <div class="banner blue mt4"><span><strong>Want your name here?</strong> Tournaments and battles run every day.</span><a class="btn btn-primary" href="signup.html">Get ranked free</a></div>
 </div></section>`,
 });
 

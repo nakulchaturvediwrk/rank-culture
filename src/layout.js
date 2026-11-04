@@ -39,6 +39,7 @@ const P = {
   send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
   logout: '<path d="M9 21H4V3h5M16 17l5-5-5-5M21 12H9"/>',
   play: '<path d="M7 4l13 8-13 8z"/>',
+  swords: '<path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 6.5L21 18v3h-3l-2-2M3 13l3 3"/>',
   medal: '<circle cx="12" cy="15" r="6"/><path d="M8 3l4 6 4-6M12 12.5v5M10 15h4"/>',
 };
 const ic = (name, cls = "icon") =>
@@ -96,6 +97,7 @@ const ME = { name: "Aarav Mehta", initials: "AM", score: 742, tier: "Challenger"
 const appNav = [
   ["dashboard.html", "Dashboard", "home"],
   ["arena.html", "Tournaments", "trophy"],
+  ["battles.html", "Battles", "swords"],
   ["drills.html", "Drills", "bolt"],
   ["jobs.html", "Jobs", "brief"],
   ["applications.html", "Applications", "file"],
@@ -108,7 +110,7 @@ const appHeader = (active) => `
 <header class="header"><div class="container" style="max-width:none">
   ${logo("dashboard.html")}
   <nav class="nav" aria-label="Main">
-    ${[["dashboard.html","Dashboard"],["arena.html","Tournaments"],["jobs.html","Jobs"],["leaderboard-app.html","Leaderboard"]].map(([h,l])=>`<a href="${h}"${h===active?' class="active" aria-current="page"':""}>${l}</a>`).join("")}
+    ${[["dashboard.html","Dashboard"],["arena.html","Tournaments"],["battles.html","Battles"],["jobs.html","Jobs"],["leaderboard-app.html","Leaderboard"]].map(([h,l])=>`<a href="${h}"${h===active?' class="active" aria-current="page"':""}>${l}</a>`).join("")}
   </nav>
   <div class="header-actions">
     <a class="btn btn-sm hide-m" href="pricing.html?from=app">Go Pro</a>
@@ -154,7 +156,7 @@ const sidebar = (active) => `
 
 const bottomNav = (active) => `
 <nav class="bottom-nav" aria-label="Quick navigation">
-  ${[["dashboard.html","Home","home"],["arena.html","Compete","trophy"],["drills.html","Drills","bolt"],["jobs.html","Jobs","brief"],["profile.html","Me","user"]]
+  ${[["dashboard.html","Home","home"],["arena.html","Compete","trophy"],["battles.html","Battle","swords"],["leaderboard-app.html","Ranks","chart"],["profile.html","Me","user"]]
     .map(([h, l, i]) => `<a href="${h}"${h === active ? ' class="active"' : ""}>${ic(i)}${l}</a>`).join("")}
 </nav>`;
 

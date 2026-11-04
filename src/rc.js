@@ -11,10 +11,12 @@ const sb = createClient(CFG.url, CFG.key, {
 // ---------- Routes ----------
 const PROTECTED = new Set(["onboarding-1.html", "onboarding-2.html", "onboarding-3.html", "dashboard.html", "arena.html", "tournament.html",
   "live.html", "results.html", "drills.html", "jobs.html", "job.html", "applications.html", "applications-empty.html", "leaderboard-app.html",
-  "profile.html", "messages.html", "notifications.html", "network.html", "companies.html", "settings.html", "mfa.html", "loading.html"]);
+  "profile.html", "messages.html", "notifications.html", "network.html", "companies.html", "settings.html", "mfa.html", "loading.html",
+  "battles.html", "battle.html", "knockout.html"]);
 // Pages whose <main> is rendered entirely from live data (prototype markup is never shown).
 const RENDERED = new Set(["dashboard.html", "arena.html", "tournament.html", "live.html", "results.html", "jobs.html", "job.html",
-  "applications.html", "applications-empty.html", "leaderboard-app.html", "profile.html", "settings.html", "mfa.html", "auth-callback.html"]);
+  "applications.html", "applications-empty.html", "leaderboard-app.html", "profile.html", "settings.html", "mfa.html", "auth-callback.html",
+  "battles.html", "battle.html", "knockout.html"]);
 const SAMPLE = new Set(["messages.html", "notifications.html", "network.html", "companies.html"]);
 
 const FIELDS = { marketing: "Marketing", data: "Data & analytics", product: "Product", sales: "Sales", ops: "Operations", design: "Design", tech: "Tech", hr: "People ops", finance: "Finance" };
@@ -303,7 +305,7 @@ H["dashboard.html"] = async () => {
   };
   const upcoming = ts.filter(t => t.status !== "ended" && !ents[t.id]).sort((a, b) => (b.cat === p.field) - (a.cat === p.field) || (a.status === "live" ? -1 : 1)).slice(0, 3);
   render(`${welcomeT ? `<div class="banner blue mb3"><span><strong>You're in, ${esc(firstName(p.full_name))}.</strong> You're registered for ${esc(welcomeT.name)} — ${whenText(welcomeT)}.</span><button class="btn btn-sm" onclick="this.parentElement.remove()">Got it</button></div>` : ""}
-  ${pageHead(`${greet}, ${esc(firstName(p.full_name))}`, "Dashboard", "", `<label class="sr" for="role-sw">Field</label><select class="input" id="role-sw" data-role-switch style="width:auto;min-height:44px">${fields.map(f => `<option value="${f}"${f === sel ? " selected" : ""}>${esc(FIELDS[f])}${ME.ratings[f] ? "" : " (unranked)"}</option>`).join("")}</select><a class="btn btn-primary" href="arena.html">${ic("trophy")} Compete</a>`)}
+  ${pageHead(`${greet}, ${esc(firstName(p.full_name))}`, "Dashboard", "", `<label class="sr" for="role-sw">Field</label><select class="input" id="role-sw" data-role-switch style="width:auto;min-height:44px">${fields.map(f => `<option value="${f}"${f === sel ? " selected" : ""}>${esc(FIELDS[f])}${ME.ratings[f] ? "" : " (unranked)"}</option>`).join("")}</select><a class="btn" href="battles.html">${ic("swords")} Battle</a><a class="btn btn-primary" href="arena.html">${ic("trophy")} Compete</a>`)}
   ${fields.map(block).join("")}
   <div class="mt4"><div class="sec-head" style="margin-bottom:var(--s5)"><h2 class="t-h2">Up next for you</h2><a class="link" href="arena.html">All tournaments →</a></div>
   <div class="grid g3">${upcoming.map(t => tCard(t, regs[t.id], ents[t.id])).join("") || '<p class="muted">Nothing open right now.</p>'}</div></div>`);
@@ -332,7 +334,7 @@ const publicCards = async (sel, limit, signedIn) => {
   if (b) b.textContent = live ? `${live} tournament${live === 1 ? "" : "s"} live now` : "New tournaments every week";
 };
 H["tournaments.html"] = signedIn => publicCards("#t-grid", 50, signedIn);
-H["index.html"] = signedIn => publicCards("#home-t", 3, signedIn);
+H["index.html"] = signedIn => Promise.all([publicCards("#home-t", 3, signedIn), BX.homeBoard && BX.homeBoard()]);
 
 H["tournament.html"] = async () => {
   const id = params().get("t") || "growth";
@@ -516,22 +518,6 @@ H["applications.html"] = async () => {
   }, { once: true });
 };
 
-// ---------- Leaderboard ----------
-H["leaderboard-app.html"] = async () => {
-  const f = params().get("f") || bestField();
-  const [board, rk] = await Promise.all([q(sb.rpc("leaderboard", { p_field: f, p_limit: 50 })), ME.ratings[f] ? q(sb.rpc("my_rank", { p_field: f })) : Promise.resolve([])]);
-  const r = rk[0], me = ME.ratings[f], p = ME.profile, nt = me ? nextTier(me.score) : null;
-  const fields = [...new Set([f, ...Object.keys(ME.ratings), "marketing", "data", "product", "sales", "ops"])];
-  render(`${pageHead("Updated after every tournament", "Leaderboard", "", r ? `<span class="badge blue">You: #${n(r.place)} · Top ${Math.max(1, Math.round(r.place / r.total * 100))}%</span>` : "")}
-  <div class="row mb3" role="group" aria-label="Field">${fields.map(x => `<a class="chip ${x === f ? "on" : ""}" href="leaderboard-app.html?f=${x}">${esc(FIELDS[x])}</a>`).join("")}</div>
-  <div class="grid g3 mb3"><div class="card kpi"><div class="label muted">Your rank in ${esc(FIELDS[f])}</div><div class="v mt1">${r ? "#" + n(r.place) : "—"}</div><div class="t-xs muted">${r ? `of ${n(r.total)} ranked` : "Play a tournament to get ranked"}</div></div>
-    <div class="card kpi"><div class="label muted">Your score</div><div class="v mt1">${me ? me.score : "—"}</div></div>
-    <div class="card kpi"><div class="label muted">To ${nt && nt <= 1000 ? tierName(nt) : "next tier"}</div><div class="v mt1">${me && nt <= 1000 ? `+${nt - me.score} pts` : "—"}</div></div></div>
-  ${p.visibility !== "public" ? `<div class="banner amber mb3"><span>You're hidden from the public board. Only people who choose <strong>Everyone</strong> visibility appear below.</span><a class="btn btn-sm" href="settings.html">Change visibility</a></div>` : ""}
-  ${board.length ? `<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Candidate</th><th>Tier</th><th style="text-align:right">Score</th></tr></thead><tbody>${board.map((b, i) => `<tr${me && p.visibility === "public" && b.full_name === p.full_name && b.score === me.score ? ' class="me"' : ""}><td class="rank-pos">${String(i + 1).padStart(2, "0")}</td><td><strong>${esc(b.full_name || "Anonymous")}</strong><div class="t-xs muted">${esc(b.city || "")}</div></td><td>${tierBadge(b.score)}</td><td class="mono" style="text-align:right">${b.score}</td></tr>`).join("")}</tbody></table></div>`
-    : `<div class="empty"><div class="icon">${ic("chart")}</div><h3 class="t-h3">No public ranks in ${esc(FIELDS[f])} yet</h3><p class="muted t-sm">Be the first — compete, then set your visibility to Everyone.</p></div>`}`);
-};
-
 // ---------- Profile ----------
 H["profile.html"] = async () => {
   const p = ME.profile, ents = await q(sb.from("entries").select("tournament_id, rating_after, auto_points, auto_max, submitted_at, tournaments(name, ranked)").order("submitted_at", { ascending: false }));
@@ -612,6 +598,10 @@ H["settings.html"] = async () => {
     await sb.auth.refreshSession(); toast("Two-step verification is off"); location.replace("settings.html?tab=s-sec");
   });
 };
+
+const BX = {};
+require("./rc-battle")(H, Object.assign(BX, { sb, $, $$, esc, q, render, toast, busy, friendly, modal, main, params, go, ic, pageHead, tierBadge, FIELDS, n, fmt, errorState,
+  me: () => ME, bestField: () => bestField() }));
 
 // ---------- Boot ----------
 async function start(file) {

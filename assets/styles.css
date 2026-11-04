@@ -364,3 +364,23 @@ textarea.input { min-height: 120px; resize: vertical; }
 .rc-sticky { position: sticky; top: 88px; }
 @media (max-width: 960px) { .rc-split { grid-template-columns: 1fr; } .rc-sticky { position: static; } }
 button:disabled, .btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* Battles */
+.option:disabled { cursor: default; }
+.option:disabled:hover { transform: none; box-shadow: none; }
+.bt-opt.correct { background: var(--green-soft); border-color: var(--green); box-shadow: inset 0 0 0 2px var(--green); }
+.bt-opt.correct .key { background: var(--green); color: #fff; border-color: var(--green); }
+.bt-opt.wrong { background: var(--red-soft); border-color: var(--red); }
+.seat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--s3); }
+.seat { border: var(--border); background: var(--surface); padding: var(--s3); display: flex; align-items: center; gap: var(--s2); min-height: 56px; }
+.seat.empty { border-style: dashed; color: var(--muted); justify-content: center; }
+.bracket { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: var(--s5); overflow-x: auto; padding-bottom: var(--s3); }
+.bracket .round { display: flex; flex-direction: column; justify-content: space-around; gap: var(--s3); }
+.match { border: var(--border); background: var(--surface); }
+.match .p { display: flex; justify-content: space-between; gap: var(--s2); padding: var(--s2) var(--s3); }
+.match .p + .p { border-top: var(--border-thin); }
+.match .p.win { font-weight: 700; background: var(--blue-soft); }
+.match .p.me { box-shadow: inset 3px 0 0 var(--blue); }
+#bt-top { position: sticky; top: calc(var(--header-h) + 8px); z-index: 20; }
+.card.dark .badge { background: transparent; color: #fff; border-color: rgba(255,255,255,.7); }
+.card.dark .badge.red { background: var(--red-soft); color: var(--red); border-color: var(--red); }
