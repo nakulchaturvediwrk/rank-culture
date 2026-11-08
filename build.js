@@ -75,8 +75,9 @@ const hashes = [...inline].map(src => `'sha256-${require("crypto").createHash("s
     x.value = x.value.replace(/script-src [^;]*;/, want);
   }
   const next = JSON.stringify(v, null, 2) + "\n";
-  if (next !== raw) {
-    if (process.env.VERCEL) problems.push("vercel.json: CSP script hashes are stale — run `node build.js` locally and commit vercel.json");
+  const cspOf = j => j.headers.flatMap(h => h.headers).filter(x => x.key === "Content-Security-Policy").map(x => x.value).join("|");
+  if (cspOf(JSON.parse(raw)) !== cspOf(v)) {
+    if (process.env.VERCEL) { const have = new Set((cspOf(JSON.parse(raw)).match(/'sha256-[^']+'/g) || [])); problems.push(`vercel.json: CSP script hashes are stale (missing: ${hashes.filter(h => !have.has(h)).join(" ") || "none"}) — run \`node build.js\` locally and commit vercel.json`); }
     else { fs.writeFileSync(vf, next); console.log("vercel.json: CSP script hashes updated — commit it"); }
   }
   fs.writeFileSync(path.join(DEP, "vercel.json"), JSON.stringify({ rewrites: v.rewrites, headers: v.headers }, null, 2)); }
