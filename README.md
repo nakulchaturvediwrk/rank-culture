@@ -8,7 +8,7 @@
 
 A merit-first hiring platform for India's youth. Compete in skill tournaments built from real work, earn a verified rank out of 1000, and get fast-tracked to interviews on proof — not on degrees, connections or certificates.
 
-[**Live site →**](https://rank-culture.vercel.app) &nbsp;·&nbsp; [5-minute demo path](#demo-path) &nbsp;·&nbsp; [Security & testing](#security--testing)
+[**Live site →**](https://rankculture.in) &nbsp;·&nbsp; [5-minute demo path](#demo-path) &nbsp;·&nbsp; [Security & testing](#security--testing)
 
 ![Rank Culture landing page](docs/screens/index.png)
 
