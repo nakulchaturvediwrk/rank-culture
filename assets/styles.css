@@ -108,7 +108,8 @@ button { cursor: pointer; background: none; border: 0; }
 
 /* ---------- Logo (the one lockup) ---------- */
 .logo { display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 700; font-size: var(--t-h3); line-height: 1; letter-spacing: -0.02em; text-transform: uppercase; white-space: nowrap; }
-.logo svg { width: 28px; height: 28px; flex: none; }
+.logo svg, .logo .logo-mark { width: 32px; height: 32px; flex: none; border-radius: 6px; display: block; }
+.logo-full { display: block; max-width: 100%; border-radius: 8px; }
 .logo.on-dark { color: #fff; }
 
 /* ---------- Header ---------- */
@@ -265,7 +266,8 @@ textarea.input { min-height: 120px; resize: vertical; }
 .auth-side .muted { color: #A9ABB5; }
 .auth-form { padding: var(--s8) var(--s7); display: flex; align-items: center; justify-content: center; }
 .auth-form > div { width: 100%; max-width: 420px; }
-@media (max-width: 960px) { .auth { grid-template-columns: 1fr; } .auth-side { display: none; } .auth-form { padding: var(--s7) var(--s5); } }
+.auth-mlogo { display: none; }
+@media (max-width: 960px) { .auth-mlogo { display: block; } .auth { grid-template-columns: 1fr; } .auth-side { display: none; } .auth-form { padding: var(--s7) var(--s5); } }
 
 /* ---------- Steps ---------- */
 .steps { display: flex; gap: var(--s2); }

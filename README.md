@@ -106,6 +106,7 @@ Deployed on Vercel: `node build.js`, output directory `deploy/`. Every URL is re
 
 - **Database:** Supabase Postgres with row-level security on every table. Scores, ratings, battle answers and applications are written only by server functions; answer keys never reach the browser. Tournament prompts unlock only after your own timer starts. Optional TOTP two-step verification is enforced in the database. Least-privilege grants (no direct writes to scores or applications).
 - **Browser:** strict Content-Security-Policy with no `unsafe-inline` or `unsafe-eval` for scripts (inline scripts are allowed by SHA-256 hash, generated at build), HSTS, `X-Frame-Options: DENY`, `nosniff`, tight Referrer and Permissions policies. All user content is escaped before rendering; the build fails on inline event handlers or `javascript:` links.
+- **Sign-in:** email + password (8+ characters, letters and digits) with an emailed one-time code to confirm new accounts; password reset by one-time code to email, or SMS once a phone provider is connected in Supabase; GitHub and Google. Email templates live in `supabase/email-templates/`.
 - **Tests:** `supabase/tests/security.test.mjs` (database: isolation, privilege, integrity, rate limits, account deletion) and `tests/e2e.py` (UI: 4 crawl modes, click-through of every control, 15 end-to-end flows against a mocked API).
 
 ## Status

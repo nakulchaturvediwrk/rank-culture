@@ -57,7 +57,7 @@ for (const m of css.matchAll(/font-size:\s*([0-9.]+px)/g)) if (!ALLOWED_PX.has(m
 // Deploy bundle: one generic stub + assets; Vercel rewrites every page URL to it.
 const DEP = path.join(__dirname, "deploy");
 fs.rmSync(DEP, { recursive: true, force: true }); fs.mkdirSync(path.join(DEP, "assets"), { recursive: true });
-for (const f of ["site.js", "app.js", "styles.css", "favicon.svg"]) fs.copyFileSync(path.join(OUT, "assets", f), path.join(DEP, "assets", f));
+for (const f of ["site.js", "app.js", "styles.css", "favicon.svg", "logo.png", "logo-64.png", "logo-180.png", "logo-512.png", "favicon-32.png", "og.png"]) fs.copyFileSync(path.join(OUT, "assets", f), path.join(DEP, "assets", f));
 const idx = fs.readFileSync(path.join(OUT, "index.html"), "utf8").replace('RCBODY("index.html")', "RCBODY()");
 // Cache-bust the entry assets so a new deploy is picked up immediately.
 const ver = require("crypto").createHash("sha1").update(fs.readFileSync(path.join(DEP, "assets/site.js"))).update(fs.readFileSync(path.join(DEP, "assets/styles.css"))).digest("hex").slice(0, 10);
