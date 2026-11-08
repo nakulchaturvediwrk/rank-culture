@@ -1,6 +1,6 @@
 // Battles, knockouts and leaderboards. Plugged into the page handlers in rc.js.
 module.exports = function install(H, c) {
-  const { sb, $, $$, esc, q, render, toast, busy, friendly, modal, main, params, go, ic, pageHead, tierBadge, FIELDS, n, fmt, errorState } = c;
+  const { sb, $, $$, esc, q, render, toast, busy, friendly, modal, main, params, go, ic, pageHead, tierBadge, FIELDS, n, fmt, errorState, bar } = c;
   const DOMAINS = { mixed: "All fields", marketing: "Marketing", data: "Data", product: "Product", sales: "Sales", ops: "Operations", design: "Design", tech: "Tech", hr: "People Ops" };
   const SIZES = [[2, "1v1 Duel", "Head to head. 7 questions."], [4, "4-player", "Squad battle. 8 questions."], [6, "6-player", "Bigger lobby, same clock."], [10, "10-player", "Max chaos. 8 questions."]];
   const EXTRA = { aptitude: "Aptitude", workstyle: "Work style", consulting: "Consulting" };
@@ -71,6 +71,29 @@ module.exports = function install(H, c) {
   };
   H["leaderboard.html"] = async signedIn => { const r = $("#lb-root"); if (r) await leaderboard(r, signedIn, "leaderboard.html"); };
 
+
+  // ---------- Drills ----------
+  // Short timed rounds against practice bots in the field (or company pack) where you lose the most points.
+  const startDrill = async (btn, domain) => {
+    busy(btn, true, "Starting…");
+    try { const id = await q(sb.rpc("battle_room", { p_size: 4, p_scoring: "classic", p_domain: domain })); await q(sb.rpc("battle_start_now", { p_id: id, p_fill: true })); location.href = `battle.html?id=${id}`; }
+    catch (e) { busy(btn, false); toast(friendly(e)); }
+  };
+  H["drills.html"] = async () => {
+    const [stats] = await Promise.all([q(sb.from("skill_stats").select("skill, domain, attempted, correct")), loadPacks()]);
+    const weak = stats.filter(x => x.attempted >= 2).map(x => Object.assign(x, { acc: x.correct / x.attempted })).sort((a, b) => a.acc - b.acc || b.attempted - a.attempted).slice(0, 6);
+    const dom = d => (DOMAINS[d] && d !== "mixed" ? d : "mixed");
+    const me = c.me(), mine = me.profile.field && DOMAINS[me.profile.field] ? me.profile.field : "mixed";
+    render(`${pageHead("No courses. Just reps.", "Drills", "Quick timed rounds — 8 questions, 20 seconds each — against practice bots. Free and unlimited during the pilot. Drills don't change your rank, but every answer feeds your skill stats.")}
+    ${weak.length ? `<div class="card card-lg dark stack mb3"><div class="label" style="color:#9DB1FF">Recommended for you</div><h2 class="t-h2">${esc(weak[0].skill)} is costing you the most points</h2><p class="muted t-sm">You've got ${weak[0].correct} of ${weak[0].attempted} right in ${esc(weak[0].skill)}. A drill in ${esc(label(dom(weak[0].domain)))} gives you more reps on it.</p><div class="row"><button class="btn btn-primary" data-drill="${esc(dom(weak[0].domain))}">${ic("play")} Start a drill</button></div></div>
+    <h2 class="t-h3 mb2">Your weakest skills</h2><div class="grid g3 mb3">${weak.map(x => `<div class="card stack"><div class="row between"><strong>${esc(x.skill)}</strong><span class="mono t-sm">${x.correct}/${x.attempted}</span></div>${bar(Math.round(x.acc * 100), x.acc >= .8 ? "blue" : "")}<div class="row between"><span class="t-xs muted">${esc(label(dom(x.domain)))}</span><button class="btn btn-sm" data-drill="${esc(dom(x.domain))}">Drill</button></div></div>`).join("")}</div>`
+      : `<div class="banner blue mb3"><span><strong>No skill data yet.</strong> Play a tournament, a battle or any drill below — we'll then point you at the skills where you lose points.</span></div>`}
+    <h2 class="t-h3 mb2">Drill a field</h2>
+    <div class="grid g3 mb3">${Object.entries(DOMAINS).map(([k, v]) => `<div class="card row between"><span><strong>${esc(v)}</strong>${k === mine ? '<br><span class="t-xs muted">Your main field</span>' : ""}</span><button class="btn btn-sm ${k === mine ? "btn-primary" : ""}" data-drill="${k}">Start</button></div>`).join("")}</div>
+    ${PACKS.length ? `<h2 class="t-h3 mb2">Company-style practice</h2><div class="grid g3">${PACKS.map(p => `<div class="card row between"><span><strong>${esc(p.name)}</strong><br><span class="t-xs muted">${n(p.questions)} questions</span></span><button class="btn btn-sm" data-drill="pack:${esc(p.id)}">Start</button></div>`).join("")}</div><p class="t-xs muted mt2">Original practice questions in each company's publicly described format. Not affiliated with or endorsed by those companies.</p>` : ""}`);
+    $$("[data-drill]").forEach(b => b.addEventListener("click", () => startDrill(b, b.dataset.drill)));
+  };
+
   // ---------- Battles hub ----------
   H["battles.html"] = async () => {
     const [hub] = await Promise.all([q(sb.rpc("battle_hub")), loadPacks()]), now = Date.now(), me = c.me();
@@ -93,7 +116,7 @@ module.exports = function install(H, c) {
         <label class="sr" for="qm-dom">Domain</label>${domainSel("qm-dom", dom)}</div></div>
       <p class="t-sm muted" id="qm-help">Classic: 100 points per correct answer plus up to 100 for speed.</p>
       <div class="grid g2">${SIZES.map(([s, h, d]) => `<div class="card stack" style="gap:var(--s2)"><div class="row between"><strong>${h}</strong>${ic(s === 2 ? "swords" : "users")}</div><p class="t-xs muted">${d}</p><div class="row" style="gap:var(--s2)"><button class="btn btn-primary btn-sm" data-quick="${s}">Find match</button><button class="btn btn-ghost btn-sm" data-room="${s}">Private room</button></div></div>`).join("")}</div>
-      <p class="t-xs muted">No opponent yet? After 20 seconds you can fill empty seats with practice bots. Bot games don't change your arena rating, but they do count towards your skill stats.</p>
+      <p class="t-xs muted">No opponent yet? After 20 seconds you can fill empty seats with practice bots. Bot games and private rooms don't change your arena rating, but every answer counts towards your skill stats.</p>
     </div>
     <div class="card card-lg dark stack"><div class="label" style="color:#9DB1FF">Arena rating</div>
       <div class="score"><span class="num">${rt ? rt.rating : 1200}</span></div>
@@ -105,7 +128,7 @@ module.exports = function install(H, c) {
     <div class="grid g3">${PACKS.map(p => `<div class="card stack"><div class="row between"><span class="badge">${esc(p.company)}</span><span class="mono t-xs muted">${n(p.questions)} Qs</span></div>
       <h3 class="t-h3">${esc(p.name)}</h3><p class="t-sm muted">${esc(p.blurb)}</p><p class="t-xs muted">${esc(p.sections)}</p>
       <div class="row" style="gap:var(--s2)"><button class="btn btn-primary btn-sm" data-pack-solo="${esc(p.id)}">Practise vs bots</button><button class="btn btn-sm" data-pack-duel="${esc(p.id)}">Find a 1v1</button></div>
-      ${p.source_url ? `<a class="link t-xs" href="${esc(p.source_url)}" target="_blank" rel="noopener noreferrer">Where the format comes from ↗</a>` : ""}</div>`).join("")}</div>` : ""}
+      ${/^https:\/\//.test(p.source_url || "") ? `<a class="link t-xs" href="${esc(p.source_url)}" target="_blank" rel="noopener noreferrer">Where the format comes from ↗</a>` : ""}</div>`).join("")}</div>` : ""}
 
     <div class="sec-head mt4" style="margin-bottom:var(--s5)"><h2 class="t-h2">Showdowns, fastest finger & knockouts</h2></div>
     <div class="stack">${hub.events.length ? hub.events.map(evRow).join("") : '<p class="muted">Nothing scheduled this week yet — host one below.</p>'}</div>
@@ -123,7 +146,7 @@ module.exports = function install(H, c) {
         <li><strong>Fastest finger</strong> — 15 seconds. Only the first correct answer scores, so speed is everything.</li>
         <li><strong>Showdowns</strong> — scheduled live events for hundreds of players, with a live leaderboard.</li>
         <li><strong>Knockouts</strong> — seeded by arena rating. 5-question duels; the winner advances until one champion is left.</li>
-        <li>Ties break on total answer time. The answer key never reaches your browser.</li></ul></div></div>
+        <li>Arena rating moves only in public matches, scheduled events and knockouts with at least two real players — private rooms are for practice.</li><li>Ties break on total answer time. The answer key never reaches your browser.</li></ul></div></div>
 
     <div class="mt4"><h2 class="t-h3 mb2">Your recent battles</h2>${hub.recent.length ? `<div class="table-wrap"><table><thead><tr><th>Battle</th><th>Mode</th><th>Finish</th><th style="text-align:right">Rating</th></tr></thead><tbody>${hub.recent.map(r => `<tr><td><a class="link" href="battle.html?id=${esc(r.id)}">${esc(r.title || "Battle")}</a><div class="t-xs muted">${esc(label(r.domain))}</div></td><td class="t-sm">${r.scoring === "fff" ? "Fastest finger" : "Classic"}</td><td class="mono">${ordinal(r.place)} / ${r.count}</td><td class="mono ${r.delta > 0 ? "green" : r.delta < 0 ? "red" : "muted"}" style="text-align:right">${r.delta == null ? "Practice" : (r.delta > 0 ? "+" : "") + r.delta}</td></tr>`).join("")}</tbody></table></div>` : '<p class="muted t-sm">No battles yet. Pick a size above and go.</p>'}</div>
     ${modal("code-modal", "Join with a code", `<form class="stack" id="code-form"><div class="field"><label for="j-code">Invite code</label><input class="input mono" id="j-code" maxlength="8" autocomplete="off" style="text-transform:uppercase"></div><div class="row"><button class="btn" type="button" data-close-modal>Cancel</button><button class="btn btn-primary" type="submit">Join</button></div></form>`)}`);

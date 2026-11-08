@@ -1,0 +1,1 @@
+{ "name": "rank-culture-db-tests", "private": true, "type": "module", "scripts": { "test": "node security.test.mjs" }, "dependencies": { "@electric-sql/pglite": "^0.3.0" } }

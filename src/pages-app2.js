@@ -82,7 +82,7 @@ const applications = appPage({
   active: "applications.html",
   body: `
 <div class="banner blue mb3 hide" id="applied-b"><span><strong>Application sent to Kirana Club.</strong> Fast-track roles reply within 7 days.</span></div>
-<script>if(location.search.includes('applied'))document.getElementById('applied-b').classList.remove('hide')</script>
+
 ${pageHead("Track everything", "Applications", "", `<a class="btn" href="applications-empty.html">View empty state</a>`)}
 <div class="grid g4">
   ${stage("Applied", [["Marketing Analyst", "Loop Health", "3 days ago", '<span class="badge">Applied</span>'], ["Growth Associate", "Kirana Club", "Just now", '<span class="badge">Applied</span>']])}
@@ -258,4 +258,4 @@ const offline = barePage({
 </div></section>`,
 });
 
-module.exports = { pages: { "jobs.html": jobs, "job.html": job, "applications.html": applications, "applications-empty.html": applicationsEmpty, "leaderboard-app.html": leaderboardApp, "profile.html": profile, "messages.html": messages, "notifications.html": notifications, "network.html": network, "companies.html": companies, "settings.html": settings, "loading.html": loading, "offline.html": offline } };
+module.exports = { pages: { "jobs.html": jobs, "job.html": job, "applications.html": applications, "applications-empty.html": applicationsEmpty, "leaderboard-app.html": leaderboardApp, "profile.html": profile, "messages.html": messages, "notifications.html": notifications, "network.html": network, "companies.html": companies, "settings.html": settings } };

@@ -62,7 +62,29 @@ const idx = fs.readFileSync(path.join(OUT, "index.html"), "utf8").replace('RCBOD
 // Cache-bust the entry assets so a new deploy is picked up immediately.
 const ver = require("crypto").createHash("sha1").update(fs.readFileSync(path.join(DEP, "assets/site.js"))).update(fs.readFileSync(path.join(DEP, "assets/styles.css"))).digest("hex").slice(0, 10);
 fs.writeFileSync(path.join(DEP, "index.html"), idx.replace("assets/site.js", `assets/site.js?v=${ver}`).replace("assets/styles.css", `assets/styles.css?v=${ver}`));
-{ const v = JSON.parse(fs.readFileSync(path.join(__dirname, "vercel.json"), "utf8")); fs.writeFileSync(path.join(DEP, "vercel.json"), JSON.stringify({ rewrites: v.rewrites, headers: v.headers }, null, 2)); }
+// CSP without 'unsafe-inline' for scripts: allow exactly the inline scripts we ship, by hash.
+const inline = new Set([...Object.values(pages).flatMap(h => [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1])),
+  ...[...fs.readFileSync(path.join(DEP, "index.html"), "utf8").matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1])]);
+const hashes = [...inline].map(src => `'sha256-${require("crypto").createHash("sha256").update(src, "utf8").digest("base64")}'`).sort();
+// Vercel reads headers from the root vercel.json before the build runs, so the hashes live there.
+// Locally this keeps it in sync; on Vercel (VERCEL=1) a stale CSP fails the build instead of shipping broken pages.
+{ const vf = path.join(__dirname, "vercel.json"), raw = fs.readFileSync(vf, "utf8"), v = JSON.parse(raw);
+  const want = `script-src 'self' ${hashes.join(" ")};`;
+  for (const h of v.headers) for (const x of h.headers) if (x.key === "Content-Security-Policy") {
+    if (!/script-src [^;]*;/.test(x.value)) problems.push("vercel.json: CSP has no script-src");
+    x.value = x.value.replace(/script-src [^;]*;/, want);
+  }
+  const next = JSON.stringify(v, null, 2) + "\n";
+  if (next !== raw) {
+    if (process.env.VERCEL) problems.push("vercel.json: CSP script hashes are stale — run `node build.js` locally and commit vercel.json");
+    else { fs.writeFileSync(vf, next); console.log("vercel.json: CSP script hashes updated — commit it"); }
+  }
+  fs.writeFileSync(path.join(DEP, "vercel.json"), JSON.stringify({ rewrites: v.rewrites, headers: v.headers }, null, 2)); }
+for (const [file, html] of Object.entries(pages)) {
+  for (const m of html.matchAll(/<[a-z][^>]*\son[a-z]+\s*=/gi)) problems.push(`${file}: inline event handler ${m[0].slice(0, 60)}`);
+  for (const m of html.matchAll(/href="javascript:/gi)) problems.push(`${file}: javascript: link`);
+}
+console.log(`CSP: ${hashes.length} inline scripts allowed by hash, no 'unsafe-inline'`);
 console.log(`Built ${names.size} pages → dist/`);
 if (problems.length) { console.log(`\n${problems.length} design-system problems:\n` + problems.join("\n")); process.exit(1); }
 console.log("Design-system lint: 0 problems ✓");

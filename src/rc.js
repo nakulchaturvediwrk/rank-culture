@@ -11,11 +11,11 @@ const sb = createClient(CFG.url, CFG.key, {
 // ---------- Routes ----------
 const PROTECTED = new Set(["onboarding-1.html", "onboarding-2.html", "onboarding-3.html", "dashboard.html", "arena.html", "tournament.html",
   "live.html", "results.html", "drills.html", "jobs.html", "job.html", "applications.html", "applications-empty.html", "leaderboard-app.html",
-  "profile.html", "messages.html", "notifications.html", "network.html", "companies.html", "settings.html", "mfa.html", "loading.html",
+  "profile.html", "messages.html", "notifications.html", "network.html", "companies.html", "settings.html", "mfa.html",
   "battles.html", "battle.html", "knockout.html"]);
 // Pages whose <main> is rendered entirely from live data (prototype markup is never shown).
 const RENDERED = new Set(["dashboard.html", "arena.html", "tournament.html", "live.html", "results.html", "jobs.html", "job.html",
-  "applications.html", "applications-empty.html", "leaderboard-app.html", "profile.html", "settings.html", "mfa.html", "auth-callback.html",
+  "applications.html", "applications-empty.html", "leaderboard-app.html", "profile.html", "settings.html", "mfa.html", "auth-callback.html", "drills.html",
   "battles.html", "battle.html", "knockout.html"]);
 const SAMPLE = new Set(["messages.html", "notifications.html", "network.html", "companies.html"]);
 
@@ -106,7 +106,7 @@ function tCard(t, reg, entry, pub) {
 }
 function errorState(e, retry = true) {
   console.error(e);
-  return `<div class="empty"><div class="icon">${ic("x")}</div><h2 class="t-h2">That didn't load</h2><p class="muted t-sm" style="max-width:48ch">${esc(friendly(e))}</p>${retry ? '<button class="btn btn-primary" onclick="location.reload()">Try again</button>' : ""}</div>`;
+  return `<div class="empty"><div class="icon">${ic("x")}</div><h2 class="t-h2">That didn't load</h2><p class="muted t-sm" style="max-width:48ch">${esc(friendly(e))}</p>${retry ? '<button class="btn btn-primary" data-reload>Try again</button>' : ""}</div>`;
 }
 const render = (html, root = main()) => { root.innerHTML = html; if (window.RCbind) window.RCbind(root); return root; };
 const modal = (id, title, body) => `<div class="modal" id="${id}" role="dialog" aria-modal="true" aria-labelledby="${id}-h"><div class="card card-lg stack"><h2 class="t-h2" id="${id}-h">${title}</h2>${body}</div></div>`;
@@ -135,7 +135,7 @@ async function fillNext() {
 function wireGlobal() {
   document.addEventListener("click", async e => {
     const out = e.target.closest("[data-logout]");
-    if (out) { e.preventDefault(); await sb.auth.signOut(); location.href = "index.html"; }
+    if (out) { e.preventDefault(); try { await sb.auth.signOut(); } catch (err) {} try { Object.keys(sessionStorage).filter(k => k.startsWith("rc-ans-")).forEach(k => sessionStorage.removeItem(k)); } catch (err) {} location.href = "index.html"; }
   });
 }
 function publicHeaderSignedIn() {
@@ -145,6 +145,7 @@ function publicHeaderSignedIn() {
 
 // ---------- Auth pages ----------
 async function startOAuth(provider, btn) {
+  const terms = $("#a-terms"); if (terms && !terms.checked) { toast("Please confirm you're 18+ and accept the Terms and Privacy policy"); terms.focus(); return; }
   busy(btn, true, `Opening ${provider === "github" ? "GitHub" : "Google"}…`);
   const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: location.origin + "/auth-callback.html" } });
   if (error) { busy(btn, false); toast(/not enabled|unsupported provider/i.test(error.message) ? `${provider === "github" ? "GitHub" : "Google"} sign-in isn't switched on yet — use your email for now.` : friendly(error)); }
@@ -304,7 +305,7 @@ H["dashboard.html"] = async () => {
       ${apps.length ? `<div class="list t-sm">${apps.map(a => `<div><span><strong>${esc(a.jobs.company)}</strong><br><span class="muted">${esc(a.jobs.role)}</span></span>${appBadge(a)}</div>`).join("")}</div>` : `<p class="t-sm muted">No applications yet. <a class="link" href="jobs.html">See jobs you qualify for →</a></p>`}</div></div></div>`;
   };
   const upcoming = ts.filter(t => t.status !== "ended" && !ents[t.id]).sort((a, b) => (b.cat === p.field) - (a.cat === p.field) || (a.status === "live" ? -1 : 1)).slice(0, 3);
-  render(`${welcomeT ? `<div class="banner blue mb3"><span><strong>You're in, ${esc(firstName(p.full_name))}.</strong> You're registered for ${esc(welcomeT.name)} — ${whenText(welcomeT)}.</span><button class="btn btn-sm" onclick="this.parentElement.remove()">Got it</button></div>` : ""}
+  render(`${welcomeT ? `<div class="banner blue mb3"><span><strong>You're in, ${esc(firstName(p.full_name))}.</strong> You're registered for ${esc(welcomeT.name)} — ${whenText(welcomeT)}.</span><button class="btn btn-sm" data-dismiss>Got it</button></div>` : ""}
   ${pageHead(`${greet}, ${esc(firstName(p.full_name))}`, "Dashboard", "", `<label class="sr" for="role-sw">Field</label><select class="input" id="role-sw" data-role-switch style="width:auto;min-height:44px">${fields.map(f => `<option value="${f}"${f === sel ? " selected" : ""}>${esc(FIELDS[f])}${ME.ratings[f] ? "" : " (unranked)"}</option>`).join("")}</select><a class="btn" href="battles.html">${ic("swords")} Battle</a><a class="btn btn-primary" href="arena.html">${ic("trophy")} Compete</a>`)}
   ${fields.map(block).join("")}
   <div class="mt4"><div class="sec-head" style="margin-bottom:var(--s5)"><h2 class="t-h2">Up next for you</h2><a class="link" href="arena.html">All tournaments →</a></div>
@@ -345,7 +346,7 @@ H["tournament.html"] = async () => {
   const [t] = await q(sb.from("tournaments").select("*").eq("id", id));
   if (!t) return render(errorState(new Error("Tournament not found."), false));
   t.status = status(t);
-  const [counts, qs, regRows, entRows] = await Promise.all([q(sb.rpc("tournament_counts")), q(sb.from("questions").select("id, kind, label, points").eq("tournament_id", id).order("position")),
+  const [counts, qs, regRows, entRows] = await Promise.all([q(sb.rpc("tournament_counts")), q(sb.rpc("tournament_tasks", { p_tournament: id })),
     q(sb.from("registrations").select("*").eq("tournament_id", id)), q(sb.from("entries").select("id").eq("tournament_id", id))]);
   const players = Number((counts.find(c => c.tournament_id === id) || {}).players || 0), reg = regRows[0], entry = entRows[0];
   const r = ME.ratings[t.cat], tasks = qs.length ? qs.map(x => [x.label, x.kind === "mcq" ? `${x.points} pts` : "Human-reviewed"]) : (t.tasks || "").split(" · ").map(x => [x, ""]);
@@ -399,7 +400,7 @@ H["live.html"] = async () => {
   </div>`).join("")}
   <div class="row between bt mt4" style="padding-top:var(--s5)"><button class="btn" id="q-prev">${ic("back")} Previous</button><div class="row"><button class="btn btn-ghost" data-modal="leave-modal">Leave</button><button class="btn btn-dark" id="q-next">Next ${ic("arrow")}</button><button class="btn btn-primary hide" id="q-submit" data-modal="submit-modal">Submit</button></div></div></div>
   ${modal("submit-modal", "Submit your answers?", `<p class="muted">You can't change answers after submitting. Unanswered tasks score zero.</p><div class="row"><button class="btn" data-close-modal>Keep working</button><button class="btn btn-primary" id="do-submit">Submit</button></div>`)}
-  ${modal("leave-modal", "Leave the tournament?", `<p class="muted">The timer keeps running. Come back before it ends and submit, or your attempt won't count.</p><div class="row"><button class="btn" data-close-modal>Stay</button><a class="btn btn-dark" href="arena.html">Leave</a></div>`)}`, box);
+  ${modal("leave-modal", "Leave the tournament?", `<p class="muted">The timer keeps running. Come back before it ends and submit, or your attempt won't count.</p><div class="row"><button class="btn" data-close-modal>Stay</button><a class="btn btn-dark" href="arena.html" data-leave>Leave</a></div>`)}`, box);
   const root = $("[data-rc-arena]"), dots = $$("[data-dot]");
   const mark = () => qs.forEach((x, i) => dots[i].classList.toggle("done", ans[x.id] !== undefined && ans[x.id] !== ""));
   const show = i => { cur = Math.max(0, Math.min(qs.length - 1, i)); $$(".q", root).forEach((el, k) => el.classList.toggle("hide", k !== cur)); dots.forEach((d, k) => d.classList.toggle("cur", k === cur)); $("#q-prev").toggleAttribute("disabled", cur === 0); $("#q-next").classList.toggle("hide", cur === qs.length - 1); $("#q-submit").classList.toggle("hide", cur !== qs.length - 1); $("#q-num").textContent = cur + 1; };
@@ -418,7 +419,8 @@ H["live.html"] = async () => {
   const timer = $("#rc-timer");
   const tick = () => { const s = Math.max(0, Math.round((deadline - Date.now()) / 1000)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; timer.textContent = (h ? String(h).padStart(2, "0") + ":" : "") + String(m).padStart(2, "0") + ":" + String(x).padStart(2, "0"); timer.classList.toggle("low", s < 300); if (!s) { clearInterval(iv); toast("Time's up — submitting your answers"); submit(true); } };
   const iv = setInterval(tick, 1000); tick(); mark(); show(0);
-  window.addEventListener("beforeunload", e => { if (!sent) { e.preventDefault(); e.returnValue = ""; } });
+  let leaving = false; $("[data-leave]").addEventListener("click", () => { leaving = true; });
+  window.addEventListener("beforeunload", e => { if (!sent && !leaving) { e.preventDefault(); e.returnValue = ""; } });
 };
 
 // ---------- Results ----------
@@ -447,7 +449,7 @@ H["results.html"] = async () => {
   <div class="stack">${claimable.length ? `<div class="card card-lg stack"><h2 class="t-h3">Claim your fast-tracks</h2><p class="t-sm muted">Your score clears the bar for these roles. Pick any — they skip resume screening.</p><div class="stack" data-options="multi" id="claim">${claimable.map(j => `<button class="option" style="padding:var(--s3)" aria-pressed="false" data-job="${esc(j.id)}"><strong class="t-sm">${esc(j.company)}</strong><div class="t-xs muted">${esc(j.role)} · ${esc(j.salary)}</div></button>`).join("")}</div><button class="btn btn-primary btn-block" id="claim-btn">Claim fast-tracks</button></div>`
     : jobs.length ? `<div class="card card-lg stack"><h2 class="t-h3">Hiring from this tournament</h2><div class="list t-sm">${jobs.map(j => `<div><span>${esc(j.company)}<br><span class="t-xs muted">${esc(j.role)}</span></span><span class="mono t-xs">${applied.has(j.id) ? "Applied" : `needs ${j.min_rank}`}</span></div>`).join("")}</div></div>` : ""}
     <div class="card stack"><h2 class="t-h3">Close the gap</h2><p class="t-sm muted">Drills target the tasks where you dropped points.</p><a class="btn btn-block" href="drills.html">Do a drill</a></div>
-    <div class="card stack"><button class="btn btn-block" id="share">${ic("send")} Copy my rank card</button><a class="btn btn-ghost btn-block" href="contact.html">Dispute a score</a></div></div></div>`);
+    <div class="card stack"><button class="btn btn-block" id="share">${ic("send")} Copy my rank card</button><a class="btn btn-ghost btn-block" href="contact.html?topic=dispute">Dispute a score</a></div></div></div>`);
   const cb = $("#claim-btn");
   if (cb) cb.addEventListener("click", async () => {
     const picks = $$("#claim .option.selected").map(o => o.dataset.job); if (!picks.length) return toast("Pick at least one company");
@@ -516,10 +518,11 @@ H["applications.html"] = async () => {
   ${pageHead("Track everything", "Applications", "", `<a class="btn" href="jobs.html">Find more jobs</a>`)}
   <div class="grid g4">${col("Applied", ["applied"])}${col("In review", ["review"])}${col("Interview", ["interview"])}${col("Offer", ["offer"])}</div>
   <p class="t-xs muted mt3">Partner companies are fictional during the pilot, so statuses won't move yet.</p>`);
-  main().addEventListener("click", async e => {
-    const b = e.target.closest("[data-withdraw]"); if (!b || !confirm("Withdraw this application?")) return;
-    try { await q(sb.from("applications").delete().eq("id", b.dataset.withdraw)); toast("Withdrawn"); H["applications.html"](); } catch (err) { toast(friendly(err)); }
-  }, { once: true });
+  $$("[data-withdraw]").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("Withdraw this application?")) return;
+    busy(b, true, "Withdrawing…");
+    try { const gone = await q(sb.from("applications").delete().eq("id", b.dataset.withdraw).select("id")); if (!gone.length) throw new Error("This application can't be withdrawn any more."); toast("Withdrawn"); H["applications.html"](); } catch (err) { busy(b, false); toast(friendly(err)); }
+  }));
 };
 
 // ---------- Profile ----------
@@ -566,8 +569,8 @@ H["settings.html"] = async () => {
     <div class="row"><button class="btn" id="export">Export my data</button><button class="btn" style="border-color:var(--red);color:var(--red)" data-modal="del-modal">Delete account</button></div></div>
   ${modal("del-modal", "Delete your account?", `<p class="muted">Your profile, ranks, tournament history and applications are deleted right away. This can't be undone.</p><div class="field"><label for="del-confirm">Type DELETE to confirm</label><input class="input" id="del-confirm" autocomplete="off"></div><div class="row"><button class="btn" data-close-modal>Cancel</button><button class="btn btn-dark" id="del-go">Delete forever</button></div>`)}`);
   const upd = async (patch, msg = "Saved") => { try { const row = await q(sb.from("profiles").update(patch).eq("id", ME.user.id).select().single()); ME.profile = row; fillShell(); toast(msg); } catch (e) { toast(friendly(e)); } };
-  $$("#vis .option").forEach(o => o.addEventListener("click", () => upd({ visibility: o.dataset.vis }, "Visibility updated")));
-  $$("[data-pref]").forEach(t => t.addEventListener("click", () => upd({ [t.dataset.pref]: t.getAttribute("aria-checked") === "true" })));
+  $$("#vis .option").forEach(o => o.addEventListener("click", () => upd({ visibility: o.dataset.vis }, o.dataset.vis === "public" ? "Visible to everyone — your name now shows on leaderboards" : "Visibility updated")));
+  $$("[data-pref]").forEach(t => t.addEventListener("click", async () => { const want = t.getAttribute("aria-checked") === "true"; await upd({ [t.dataset.pref]: want }); if (!!ME.profile[t.dataset.pref] !== want) t.setAttribute("aria-checked", String(!want)); }));
   $("#s-acc").addEventListener("submit", e => { e.preventDefault(); const name = $("#a-n").value.trim(); if (name.length < 1) return toast("Enter your name"); upd({ full_name: name.slice(0, 80), city: $("#a-c").value.trim().slice(0, 60) || null, stage: $("#a-s").value, field: $("#a-f").value }); });
   $("#a-e-btn").addEventListener("click", async () => { const v = $("#a-e").value.trim(); if (!/^\S+@\S+\.\S+$/.test(v)) return toast("Enter a valid email"); const { error } = await sb.auth.updateUser({ email: v }, { emailRedirectTo: location.origin + "/settings.html?tab=s-acc" }); toast(error ? friendly(error) : "Check both inboxes to confirm the change"); });
   $("#sign-out-all").addEventListener("click", async () => { await sb.auth.signOut({ scope: "global" }); location.href = "login.html"; });
@@ -578,7 +581,7 @@ H["settings.html"] = async () => {
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rank-culture-data.json"; a.click(); URL.revokeObjectURL(a.href);
     } catch (e) { toast(friendly(e)); }
   });
-  $("#del-go").addEventListener("click", async () => { if ($("#del-confirm").value !== "DELETE") return toast("Type DELETE to confirm"); try { await q(sb.rpc("delete_my_account")); await sb.auth.signOut({ scope: "local" }); location.href = "index.html"; } catch (e) { toast(friendly(e)); } });
+  $("#del-go").addEventListener("click", async () => { const b = $("#del-go"); if ($("#del-confirm").value.trim() !== "DELETE") return toast("Type DELETE to confirm"); busy(b, true, "Deleting…"); try { await q(sb.rpc("delete_my_account")); try { Object.keys(sessionStorage).filter(k => k.startsWith("rc-")).forEach(k => sessionStorage.removeItem(k)); localStorage.removeItem("rc-next"); } catch (e) {} await sb.auth.signOut({ scope: "local" }); location.replace("index.html?deleted=1"); } catch (e) { busy(b, false); toast(friendly(e)); } });
   const on = $("#mfa-on"), off = $("#mfa-off");
   if (on) on.addEventListener("click", async () => {
     busy(on, true);
@@ -603,8 +606,39 @@ H["settings.html"] = async () => {
   });
 };
 
+
+// ---------- Contact ----------
+H["contact.html"] = async signedIn => {
+  const form = $("#c-form"); if (!form) return;
+  const topic = params().get("topic");
+  if (topic && $(`#c-topic option[value="${CSS.escape(topic)}"]`)) $("#c-topic").value = topic;
+  if (topic === "pro-waitlist") $("#c-msg").value = "Please email me when Pro opens.";
+  if (signedIn) {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) {
+        $("#c-email").value = user.email || "";
+        const { data: p } = await sb.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        if (p && p.full_name) $("#c-name").value = p.full_name;
+      }
+    } catch (e) { /* prefill is optional */ }
+  }
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const name = $("#c-name").value.trim(), email = $("#c-email").value.trim(), msg = $("#c-msg").value.trim();
+    const bad = [["#c-name", !name], ["#c-email", !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)], ["#c-msg", !msg]];
+    bad.forEach(([sel, b]) => $(sel).classList.toggle("error", b));
+    if (bad.some(([, b]) => b)) return toast("Please fill in your name, a valid email and a message");
+    const btn = $("button[type=submit]", form); busy(btn, true, "Sending…");
+    try {
+      await q(sb.rpc("send_contact", { p_topic: $("#c-topic").value, p_name: name, p_email: email, p_message: msg }));
+      $("#c-wrap").innerHTML = `<div class="card card-lg stack"><div class="icon">${ic("check")}</div><h2 class="t-h2">Message sent</h2><p class="muted">Thanks, ${esc(firstName(name))}. We'll reply to <strong>${esc(email)}</strong>, usually within two working days.</p><a class="btn" href="index.html">Back to home</a></div>`;
+    } catch (err) { busy(btn, false); $("#c-msg-box").innerHTML = `<div class="banner red">${esc(friendly(err))}</div>`; }
+  });
+};
+
 const BX = {};
-require("./rc-battle")(H, Object.assign(BX, { sb, $, $$, esc, q, render, toast, busy, friendly, modal, main, params, go, ic, pageHead, tierBadge, FIELDS, n, fmt, errorState,
+require("./rc-battle")(H, Object.assign(BX, { sb, $, $$, esc, q, render, toast, busy, friendly, modal, main, params, go, ic, pageHead, tierBadge, FIELDS, n, fmt, errorState, bar,
   me: () => ME, bestField: () => bestField() }));
 
 // ---------- Boot ----------
@@ -627,6 +661,7 @@ async function start(file) {
     } else if (session && (file === "login.html" || file === "signup.html")) {
       return afterSignIn();
     } else if (session) publicHeaderSignedIn();
+    if (file === "index.html" && params().get("deleted")) setTimeout(() => toast("Your account and all its data have been deleted."), 300);
     if (file === "login.html") authPage("login");
     if (file === "signup.html") authPage("signup");
     if (H[file]) await H[file](!!session);

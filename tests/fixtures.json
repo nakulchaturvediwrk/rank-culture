@@ -1,0 +1,183 @@
+{
+ "tournaments": [
+  {
+   "id": "practice",
+   "name": "Placement Sprint (practice)",
+   "cat": "marketing",
+   "blurb": "A 20-minute warm-up. Doesn't affect your rank.",
+   "tasks": "Three quick calls a junior marketer makes every week",
+   "prize": "Practice only",
+   "opens_at": "2025-12-31T18:30:00+00:00",
+   "closes_at": "2027-12-31T18:29:00+00:00",
+   "duration_min": 20,
+   "cap": 100000,
+   "ranked": false,
+   "sort": 0
+  },
+  {
+   "id": "growth",
+   "name": "Growth Marketing Cup",
+   "cat": "marketing",
+   "blurb": "Three real tasks from three D2C brands, anonymised.",
+   "tasks": "Write a launch email · Fix a leaky funnel · Pick the winning ad",
+   "prize": "Top finishers: fast-track to pilot partner marketing roles",
+   "opens_at": "2026-11-03T04:30:00+00:00",
+   "closes_at": "2027-11-16T18:29:00+00:00",
+   "duration_min": 60,
+   "cap": 3000,
+   "ranked": true,
+   "sort": 1
+  },
+  {
+   "id": "sql",
+   "name": "SQL Sprint",
+   "cat": "data",
+   "blurb": "Clean data, answer business questions, defend your query.",
+   "tasks": "Clean a messy sales table · Answer business questions",
+   "prize": "Top finishers: fast-track to pilot partner analyst roles",
+   "opens_at": "2026-11-01T04:30:00+00:00",
+   "closes_at": "2027-11-14T18:29:00+00:00",
+   "duration_min": 45,
+   "cap": 4000,
+   "ranked": true,
+   "sort": 2
+  },
+  {
+   "id": "product",
+   "name": "Product Teardown Clash",
+   "cat": "product",
+   "blurb": "Tear down an app, prioritise a backlog, write the PRD.",
+   "tasks": "Teardown a real app · Prioritise a backlog · Write a 1-page PRD",
+   "prize": "Top finishers: fast-track to pilot partner product roles",
+   "opens_at": "2027-11-12T04:30:00+00:00",
+   "closes_at": "2027-11-22T18:29:00+00:00",
+   "duration_min": 75,
+   "cap": 2000,
+   "ranked": true,
+   "sort": 4
+  },
+  {
+   "id": "hr",
+   "name": "People Ops Challenge",
+   "cat": "hr",
+   "blurb": "Hiring plans and escalations.",
+   "tasks": "Draft a hiring plan · Handle an escalation",
+   "prize": "Top finishers: fast-track to pilot partner people-ops roles",
+   "opens_at": "2026-10-10T04:30:00+00:00",
+   "closes_at": "2026-10-18T18:29:00+00:00",
+   "duration_min": 45,
+   "cap": 800,
+   "ranked": true,
+   "sort": 8
+  }
+ ],
+ "jobs": [
+  {
+   "id": "kirana-growth",
+   "role": "Growth Associate",
+   "company": "Kirana Club",
+   "city": "Bengaluru",
+   "salary": "8–12 LPA",
+   "min_rank": 700,
+   "cat": "marketing",
+   "type": "Full-time",
+   "fast_track": true,
+   "about": "A 60-person startup.",
+   "duties": [
+    "Own WhatsApp campaigns",
+    "Run weekly A/B tests"
+   ],
+   "hiring_from": "growth",
+   "active": true
+  },
+  {
+   "id": "saltpan-ba",
+   "role": "Business Analyst",
+   "company": "Saltpan Labs",
+   "city": "Pune",
+   "salary": "7–10 LPA",
+   "min_rank": 650,
+   "cat": "data",
+   "type": "Full-time",
+   "fast_track": true,
+   "about": "An analytics consultancy.",
+   "duties": [
+    "Build dashboards"
+   ],
+   "hiring_from": "sql",
+   "active": true
+  },
+  {
+   "id": "paperlane-intern",
+   "role": "Marketing Intern",
+   "company": "Paperlane",
+   "city": "Remote",
+   "salary": "₹25k / month",
+   "min_rank": 500,
+   "cat": "marketing",
+   "type": "Internship",
+   "fast_track": false,
+   "about": "A remote-first stationery brand.",
+   "duties": [
+    "Support social media"
+   ],
+   "hiring_from": null,
+   "active": true
+  },
+  {
+   "id": "bluepine-perf",
+   "role": "Performance Marketer",
+   "company": "Bluepine Foods",
+   "city": "Mumbai",
+   "salary": "10–14 LPA",
+   "min_rank": 720,
+   "cat": "marketing",
+   "type": "Full-time",
+   "fast_track": true,
+   "about": "A D2C snacks brand.",
+   "duties": [
+    "Run Meta campaigns"
+   ],
+   "hiring_from": "growth",
+   "active": true
+  }
+ ],
+ "packs": [
+  {
+   "id": "tcs-nqt",
+   "company": "TCS",
+   "name": "TCS NQT-style · Foundation",
+   "blurb": "Numerical, verbal and reasoning.",
+   "sections": "Numerical · Verbal · Reasoning",
+   "source_url": "https://www.placementpreparation.io/tcs-nqt/syllabus-and-test-pattern/",
+   "questions": 15
+  },
+  {
+   "id": "consulting",
+   "company": "McKinsey · BCG · Bain",
+   "name": "Consulting case math (MBB-style)",
+   "blurb": "Profitability and sizing.",
+   "sections": "Profitability · Sizing",
+   "source_url": "javascript:alert(1)",
+   "questions": 15
+  }
+ ],
+ "skills": [
+  {
+   "skill": "SEO",
+   "domain": "marketing"
+  },
+  {
+   "skill": "Copywriting",
+   "domain": "marketing"
+  },
+  {
+   "skill": "SQL",
+   "domain": "data"
+  },
+  {
+   "skill": "Pseudocode",
+   "domain": "aptitude"
+  }
+ ]
+}

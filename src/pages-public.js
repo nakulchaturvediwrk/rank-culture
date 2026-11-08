@@ -81,10 +81,10 @@ const index = publicPage({
       <li>${ic("x")} Referrals and connections beat ability</li>
     </ul></div>
     <div><div class="label" style="color:#9DB1FF;margin-bottom:var(--s4)">Rank Culture</div><ul>
-      <li>${ic("check")} Your score is the only filter. College is hidden from recruiters</li>
-      <li>${ic("check")} 15-minute drills on real tasks, only where your rank is weak</li>
+      <li>${ic("check")} Your score is the only filter. We never ask for your college</li>
+      <li>${ic("check")} Quick timed drills on the skills where you lose points</li>
       <li>${ic("check")} Top ranks skip screening and go straight to interview</li>
-      <li>${ic("check")} Every point is earned in a proctored tournament</li>
+      <li>${ic("check")} Every point is earned on the clock and scored on our server</li>
     </ul></div>
   </div>
 </div></section>
@@ -93,8 +93,8 @@ const index = publicPage({
   <div class="sec-head"><h2 class="t-h1">How it works</h2><a class="link" href="how-it-works.html">Full breakdown →</a></div>
   <div class="grid g3">
     ${[["01", "Compete", "Join weekly tournaments built from real work — write the email, fix the funnel, clean the data. 40–90 minutes. Free.", "trophy"],
-       ["02", "Rank up", "Get a verified score out of 1000 and a tier: Rookie → Contender → Challenger → Elite → Legend. Drills fix your weakest skill.", "up"],
-       ["03", "Get hired", "Companies hire straight from the leaderboard. Top finishers win interview fast-tracks that skip resume screening.", "brief"]]
+       ["02", "Rank up", "Get a verified score out of 1000 and a tier: Rookie → Contender → Challenger → Elite → Legend. Drills target your weakest skill.", "up"],
+       ["03", "Get hired", "Top finishers win interview fast-tracks to pilot partner roles that skip resume screening. More hiring partners join every month.", "brief"]]
       .map(([n, h, p, i]) => `<div class="card card-lg"><div class="row between"><span class="mono t-h1 blue">${n}</span>${ic(i)}</div><h3 class="t-h2 mt3">${h}</h3><p class="t-body muted mt1">${p}</p></div>`).join("")}
   </div>
 </div></section>
@@ -148,27 +148,27 @@ const howItWorks = publicPage({
 </div></section>
 <section class="section"><div class="container stack-lg">
   ${[["01", "Pick your field", "Marketing, data, product, sales, ops, design, tech or people ops. You can compete in more than one.", "Takes 60 seconds. No resume upload."],
-     ["02", "Enter a tournament", "Every tournament is built with hiring partners from tasks their team does on the job. You do the work live, proctored, in 40–90 minutes.", "Example: you get a real (anonymised) funnel and 45 minutes to find the leak and write the fix."],
-     ["03", "Get your verified score", "AI scoring plus a human reviewer panel grades your work on a 0–1000 scale. You see exactly where you lost points.", "Scores are final and can't be bought. Retake in 30 days."],
-     ["04", "Close gaps with drills", "No courses. Drills are 15-minute real tasks targeted only at your weakest skill. Do one, earn points back.", "Average Challenger gains +38 points from 5 drills."],
-     ["05", "Get fast-tracked", "Top finishers win interview fast-tracks: you skip screening and go straight to a real interview. Recruiters also search the leaderboard directly.", "College name is hidden from recruiters until interview."]]
+     ["02", "Enter a tournament", "Every tournament is built from tasks the role does on the job. You do the work live, on a timer that runs on our server, in 40–90 minutes.", "Example: you get a real (anonymised) funnel and 45 minutes to find the leak and write the fix."],
+     ["03", "Get your verified score", "Multiple-choice tasks are scored instantly on our server; written answers are reviewed by people. You get a score out of 1000 and see exactly where you lost points.", "Scores can't be bought or edited. One attempt per tournament."],
+     ["04", "Close gaps with drills", "No courses. Drills are short timed rounds on the skill where you lose the most points, against practice bots. Every answer feeds your skill stats.", "Free and unlimited during the pilot."],
+     ["05", "Get fast-tracked", "Top finishers win interview fast-tracks: you skip screening and go straight to a real interview. ", "We don't ask for your college. Your rank comes only from your work."]]
     .map(([n, h, p, ex]) => `<div class="grid step-row"><div class="mono t-display blue">${n}</div><div class="stack"><h2 class="t-h2">${h}</h2><p class="t-body">${p}</p><p class="t-sm muted">${ex}</p></div></div>`).join("")}
 </div></section>
 <section class="section"><div class="container">
   <div class="sec-head"><h2 class="t-h1">The five tiers</h2><span class="label muted">Score out of 1000</span></div>
   <div class="grid g5">
-    ${[["Rookie", "0–449", "Just starting. Every tournament teaches you something."], ["Contender", "450–649", "You can do the work. Drills will sharpen you."], ["Challenger", "650–799", "Visible to recruiters. Eligible for fast-tracks."], ["Elite", "800–899", "Top 5%. Companies message you first."], ["Legend", "900+", "Top 1%. Offers come to you."]]
+    ${[["Rookie", "0–449", "Just starting. Every tournament teaches you something."], ["Contender", "450–649", "You can do the work. Drills will sharpen you."], ["Challenger", "650–799", "Clears the bar for most fast-track roles."], ["Elite", "800–899", "Strong, consistent work. First in line for fast-tracks."], ["Legend", "900+", "Exceptional work. The top of the board."]]
       .map(([t, r, d], i) => `<div class="card ${i === 4 ? "dark" : i === 3 ? "blue" : ""}"><div class="label">${t}</div><div class="mono t-h3 mt1">${r}</div><p class="t-sm mt2 ${i > 2 ? "" : "muted"}">${d}</p></div>`).join("")}
   </div>
 </div></section>
 <section class="section"><div class="container grid g2" style="gap:var(--s7)">
   <div class="stack"><h2 class="t-h1">Questions</h2><p class="muted">Straight answers to what students ask most.</p></div>
   <div class="list">
-    ${[["Is it really free?", "Yes. Tournaments, your rank and job applications are free forever. Pro (₹199/month) adds unlimited drills, detailed score breakdowns and priority fast-tracks."],
-       ["Can someone cheat?", "Tournaments are proctored with webcam checks, tab monitoring and plagiarism detection. Flagged attempts are reviewed by a human before any score is published."],
-       ["I'm from a tier-3 college. Does that matter?", "No. Recruiters can't see your college until they invite you to interview. Your rank comes only from what you do in tournaments and battles."],
-       ["What if I score low?", "Your score is private by default. Only you see it until you choose to make it public. Do drills, retake in 30 days."],
-       ["Who builds the tasks?", "Our hiring partners and a panel of practitioners. Every task maps to work the role actually does in its first 90 days."]]
+    ${[["Is it really free?", "Yes. Tournaments, battles, drills, your rank and job applications are free. A paid Pro plan may come after the pilot — nothing is for sale today."],
+       ["Can someone cheat?", "The timer runs on our server, prompts only unlock when your timer starts, answer keys never reach your browser and tab switches are recorded with your entry. Written answers are reviewed by people, and any score can be disputed."],
+       ["I'm from a tier-3 college. Does that matter?", "No. We don't ask for your college. Your rank comes only from what you do in tournaments and battles."],
+       ["What if I score low?", "Your score is private by default. Only you see it until you choose to make it public. Practise with drills and battles, then enter the next tournament."],
+       ["Who builds the tasks?", "We write them with working practitioners, based on what the role does in its first 90 days. Pilot hiring partners will add their own."]]
       .map(([q, a]) => `<details style="display:block;padding:var(--s4) 0;border-bottom:var(--border-thin)"><summary class="t-h3" style="cursor:pointer">${q}</summary><p class="muted mt1">${a}</p></details>`).join("")}
   </div>
 </div></section>
@@ -183,7 +183,7 @@ const tournamentsPublic = publicPage({
 <section class="hero" style="padding-bottom:var(--s7)"><div class="container stack">
   <span class="badge red live" data-live-count>Tournaments live now</span>
   <h1 class="t-display">Tournaments</h1>
-  <p class="lead">Real work, real time, real ranks. Every tournament is free to enter. Top finishers win interview fast-tracks with hiring partners.</p>
+  <p class="lead">Real work, real time, real ranks. Every tournament is free to enter. Top finishers win interview fast-tracks to pilot partner roles.</p>
 </div></section>
 <section class="section"><div class="container">
   <div class="row between mb3">
@@ -193,7 +193,7 @@ const tournamentsPublic = publicPage({
     </div>
   </div>
   <div class="grid g3" id="t-grid"><p class="muted">Loading tournaments…</p>
-    <div class="empty hide span2" data-empty><div class="icon">${ic("trophy")}</div><h3 class="t-h3">No tournaments in this field this week</h3><p class="muted t-sm">New ones drop every Monday. Turn on alerts after you sign up.</p></div>
+    <div class="empty hide span2" data-empty><div class="icon">${ic("trophy")}</div><h3 class="t-h3">No tournaments in this field this week</h3><p class="muted t-sm">New ones are added every week.</p></div>
   </div>
 </div></section>`,
 });
@@ -202,7 +202,7 @@ const tournamentsPublic = publicPage({
 const leaderTable = (me = false) => `
 <div class="row between mb3">
   <div class="row" role="group" aria-label="Field">${["All fields", "Marketing", "Data", "Product", "Tech", "Sales", "Ops", "Design"].map((x, i) => `<button class="chip ${i === 0 ? "on" : ""}" data-toast="Showing ${x}">${x}</button>`).join("")}</div>
-  <select class="input" style="width:auto;min-height:36px" aria-label="Region" onchange="toast('Region: '+this.value)"><option>All India</option><option>Maharashtra</option><option>Karnataka</option><option>Delhi NCR</option><option>Tamil Nadu</option></select>
+  <select class="input" style="width:auto;min-height:36px" aria-label="Region"><option>All India</option><option>Maharashtra</option><option>Karnataka</option><option>Delhi NCR</option><option>Tamil Nadu</option></select>
 </div>
 <div class="table-wrap"><table>
   <thead><tr><th>Rank</th><th>Candidate</th><th>Field</th><th>Tier</th><th style="text-align:right">Score</th><th style="text-align:right">7-day</th></tr></thead>
@@ -235,29 +235,29 @@ const employers = publicPage({
   <div class="stack-lg">
     <span class="badge dark">For employers</span>
     <h1 class="t-display">Hire people who already did the job.</h1>
-    <p class="lead">Stop screening 2,000 resumes for 10 interviews. Search a ranked pool of candidates who've proven the exact skill in a proctored tournament, or host your own.</p>
-    <div class="row"><a class="btn btn-primary btn-lg" href="recruiter.html">Open recruiter console</a><a class="btn btn-lg" href="contact.html">Talk to us</a></div>
+    <p class="lead">Stop screening thousands of resumes for ten interviews. Hire from candidates who proved the exact skill in a timed, server-scored tournament — or host your own.</p>
+    <div class="row"><a class="btn btn-primary btn-lg" href="contact.html?topic=employer">Join the hiring pilot</a><a class="btn btn-lg" href="recruiter.html">See a console preview</a></div>
   </div>
   <div class="grid g2">
-    <div class="card kpi"><div class="label muted">Time to shortlist</div><div class="v mt1">2 days</div><p class="t-xs muted mt1">vs 3 weeks average</p></div>
-    <div class="card kpi"><div class="label muted">Interview → offer</div><div class="v mt1">1 in 3</div><p class="t-xs muted mt1">vs 1 in 12 industry</p></div>
-    <div class="card kpi dark span2"><div class="label" style="color:#9DB1FF">Bias removed</div><p class="t-h3 mt1">College, gender and age hidden until you invite to interview.</p></div>
+    <div class="card kpi"><div class="label muted">Proof, not paper</div><p class="t-body mt1" style="font-weight:600">Every score comes from timed, server-scored work.</p></div>
+    <div class="card kpi"><div class="label muted">Pilot</div><p class="t-body mt1" style="font-weight:600">Free for our first hiring partners.</p></div>
+    <div class="card kpi dark span2"><div class="label" style="color:#9DB1FF">No pedigree filter</div><p class="t-h3 mt1">We don't collect college, gender or age. Candidates are ranked only on the work.</p></div>
   </div>
 </div></section>
 <section class="section"><div class="container">
   <div class="sec-head"><h2 class="t-h1">Two ways to hire</h2></div>
   <div class="grid g2">
-    <div class="card card-lg stack"><span class="mono t-h1 blue">A</span><h3 class="t-h2">Search the leaderboard</h3><p class="muted">Filter by skill, score, tier and city. See exactly how each candidate performed, task by task. Message directly.</p><a class="btn" href="recruiter.html">Try talent search</a></div>
-    <div class="card card-lg stack dark"><span class="mono t-h1" style="color:#9DB1FF">B</span><h3 class="t-h2">Host a hiring tournament</h3><p class="muted">Turn your real work into a 60-minute tournament. Thousands compete; you interview the top 20. Your brand gets in front of every participant.</p><a class="btn btn-primary" href="host-tournament.html">Host a tournament</a></div>
+    <div class="card card-lg stack"><span class="mono t-h1 blue">A</span><h3 class="t-h2">Search the leaderboard</h3><p class="muted">Filter by skill, score, tier and city. See exactly how each candidate performed, task by task. Opens to pilot partners soon.</p><a class="btn" href="recruiter.html">Preview talent search</a></div>
+    <div class="card card-lg stack dark"><span class="mono t-h1" style="color:#9DB1FF">B</span><h3 class="t-h2">Host a hiring tournament</h3><p class="muted">Turn your real work into a 60-minute tournament. Candidates compete on it; you interview the top finishers.</p><a class="btn btn-primary" href="contact.html?topic=employer">Plan a tournament with us</a></div>
   </div>
 </div></section>
 <section class="section"><div class="container">
-  <div class="sec-head"><h2 class="t-h1">Pricing for teams</h2></div>
+  <div class="sec-head"><h2 class="t-h1">Planned pricing for teams</h2><span class="label muted">Free during the pilot</span></div>
   <div class="grid g3">
     ${[["Starter", "Free", ["5 candidate unlocks / month", "Leaderboard search", "Direct messaging"]],
        ["Growth", "₹14,999/mo", ["50 unlocks / month", "1 hosted tournament / quarter", "Score breakdowns + work samples", "ATS export"]],
        ["Enterprise", "Custom", ["Unlimited unlocks", "Monthly hosted tournaments", "Custom task design with our panel", "Campus-free hiring programme"]]]
-      .map(([n, p, f], i) => `<div class="card card-lg ${i === 1 ? "blue" : ""} stack"><div class="label">${n}</div><div class="mono t-h1">${p}</div><ul style="list-style:none" class="stack t-sm">${f.map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul><a class="btn ${i === 1 ? "btn-dark" : ""} btn-block" href="contact.html">${i === 2 ? "Contact sales" : "Get started"}</a></div>`).join("")}
+      .map(([n, p, f], i) => `<div class="card card-lg ${i === 1 ? "blue" : ""} stack"><div class="label">${n}</div><div class="mono t-h1">${p}</div><ul style="list-style:none" class="stack t-sm">${f.map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul><a class="btn ${i === 1 ? "btn-dark" : ""} btn-block" href="contact.html?topic=employer">${i === 2 ? "Talk to us" : "Join the pilot"}</a></div>`).join("")}
   </div>
 </div></section>`,
 });
@@ -275,21 +275,21 @@ const pricing = publicPage({
 <section class="section"><div class="container">
   <div class="grid g3">
     <div class="card card-lg stack"><div class="label">Free</div><div class="mono t-display">₹0</div><p class="muted t-sm">Everything you need to get ranked and hired.</p>
-      <ul style="list-style:none" class="stack t-sm">${["All tournaments", "Verified rank + tier", "Apply to all jobs", "3 drills a week", "Public profile"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
+      <ul style="list-style:none" class="stack t-sm">${["All tournaments and battles", "Verified rank + tier", "Apply to all jobs", "Unlimited practice drills", "Public profile"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
       <a class="btn btn-block" href="signup.html">Start free</a></div>
     <div class="card card-lg blue stack" style="box-shadow:8px 8px 0 var(--ink)"><div class="row between"><div class="label">Pro</div><span class="badge dark">Coming soon</span></div><div><span class="mono t-display">₹199</span><span class="t-sm"> / month</span></div><p class="t-sm muted">₹99 with student ID.</p>
-      <ul style="list-style:none" class="stack t-sm">${["Everything in Free", "Unlimited drills", "Task-by-task score breakdown", "Priority fast-track queue", "See who viewed your rank"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
+      <ul style="list-style:none" class="stack t-sm">${["Everything in Free", "Personal drill plans", "Deeper score analytics", "Priority fast-track queue", "See who viewed your rank"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
       <button class="btn btn-dark btn-block" data-modal="upgrade-modal">Join the Pro waitlist</button></div>
     <div class="card card-lg dark stack"><div class="label" style="color:#9DB1FF">Campus</div><div class="mono t-display">Free</div><p class="muted t-sm">For placement cells and college clubs.</p>
       <ul style="list-style:none" class="stack t-sm">${["Private college tournaments", "Batch rank reports", "Pro for every student at ₹49", "Placement officer dashboard"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
-      <a class="btn btn-primary btn-block" href="contact.html">Bring to my college</a></div>
+      <a class="btn btn-primary btn-block" href="contact.html?topic=college">Bring to my college</a></div>
   </div>
   <p class="t-xs muted center mt4">Planned prices, including GST. Pro and Campus aren't on sale during the pilot — everything you need to compete and get ranked is free.</p>
 </div></section>
 <div class="modal" id="upgrade-modal" role="dialog" aria-modal="true" aria-labelledby="up-h"><div class="card card-lg stack">
   <div class="row between"><h2 class="t-h2" id="up-h">Pro is coming after the pilot</h2><button class="icon-btn" data-close-modal aria-label="Close">${ic("x")}</button></div>
   <p class="t-sm muted">Nothing is for sale yet and we won't ask for payment. Everything you need to compete, get ranked and apply is free. Tell us you're interested and we'll email you when Pro opens.</p>
-  <div class="row"><a class="btn btn-primary" href="contact.html">Tell me when it opens</a><button class="btn" data-close-modal>Close</button></div>
+  <div class="row"><a class="btn btn-primary" href="contact.html?topic=pro-waitlist">Tell me when it opens</a><button class="btn" data-close-modal>Close</button></div>
 </div></div>`,
 });
 
@@ -308,8 +308,8 @@ const about = publicPage({
     <p>Every year, about 1 crore young Indians enter the job market. Most get filtered out by college name, a CGPA cut-off or a keyword scanner — before a human sees what they can do.</p>
     <p>The fix on offer is usually another paid course. A certificate that recruiters don't trust either.</p></div>
   <div class="stack"><h2 class="t-h1">Our answer</h2>
-    <p>Make ability visible and comparable. Tournaments built from real work. Scores that are proctored, explainable and hard to fake. A leaderboard companies hire from.</p>
-    <p>And instead of courses, drills: tiny real tasks that fix exactly the skill holding your rank back.</p></div>
+    <p>Make ability visible and comparable. Tournaments built from real work. Scores that are timed, explainable and hard to fake. A leaderboard companies hire from.</p>
+    <p>And instead of courses, drills: quick timed rounds on exactly the skill holding your rank back.</p></div>
 </div></section>
 <section class="section"><div class="container">
   <div class="sec-head"><h2 class="t-h1">What we believe</h2></div>
@@ -325,26 +325,28 @@ const about = publicPage({
 });
 
 // ---------- Contact ----------
+const TOPICS = [["candidate", "Candidate — account or tournament help"], ["dispute", "Dispute a score"], ["employer", "Employer / hiring pilot"], ["college", "College placement cell"], ["pro-waitlist", "Tell me when Pro opens"], ["investor", "Investor / mentor"], ["press", "Press"], ["other", "Something else"]];
 const contact = publicPage({
   title: "Contact & support",
   active: "",
   body: `
 <section class="hero" style="padding-bottom:var(--s7)"><div class="container stack">
-  <span class="badge blue">We reply within 24 hours</span>
+  <span class="badge blue">A real person reads every message</span>
   <h1 class="t-display">Contact & support</h1>
 </div></section>
 <section class="section"><div class="container grid g2" style="gap:var(--s7);align-items:start">
-  <form class="card card-lg stack" data-go="contact.html?sent=1" data-toast-msg="Message sent — we'll reply within 24 hours" novalidate>
-    <div class="field"><label for="c-topic">I'm a</label><select class="input" id="c-topic"><option>Candidate</option><option>Employer / recruiter</option><option>College placement cell</option><option>Investor / mentor</option><option>Press</option></select></div>
-    <div class="field"><label for="c-name">Name</label><input class="input" id="c-name" required autocomplete="name"><span class="err hint red hide">Please enter your name</span></div>
-    <div class="field"><label for="c-email">Email</label><input class="input" id="c-email" type="email" required autocomplete="email"><span class="err hint red hide">Enter a valid email</span></div>
-    <div class="field"><label for="c-msg">Message</label><textarea class="input" id="c-msg" required></textarea><span class="err hint red hide">Tell us a little more</span></div>
+  <div id="c-wrap"><form class="card card-lg stack" id="c-form" novalidate>
+    <div id="c-msg-box"></div>
+    <div class="field"><label for="c-topic">What's it about?</label><select class="input" id="c-topic">${TOPICS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></div>
+    <div class="field"><label for="c-name">Name</label><input class="input" id="c-name" maxlength="80" required autocomplete="name"></div>
+    <div class="field"><label for="c-email">Email</label><input class="input" id="c-email" type="email" maxlength="254" required autocomplete="email"></div>
+    <div class="field"><label for="c-msg">Message</label><textarea class="input" id="c-msg" maxlength="4000" required></textarea><span class="hint t-xs muted">For a score dispute, name the tournament and the task.</span></div>
     <button class="btn btn-primary btn-lg" type="submit">Send message</button>
-  </form>
+  </form></div>
   <div class="stack">
-    ${[["Candidates", "Score disputes, account help, tournament issues.", "help@rankculture.in"], ["Employers", "Talent search, hosting tournaments, pricing.", "hire@rankculture.in"], ["Colleges", "Campus tournaments and placement dashboards.", "campus@rankculture.in"], ["Mentors & investors", "Want to help shape the product?", "nakul@rankculture.in"]]
-      .map(([h, p, e]) => `<div class="card"><div class="row between"><h3 class="t-h3">${h}</h3>${ic("mail")}</div><p class="t-sm muted mt1">${p}</p><p class="mono t-sm mt2">${e}</p></div>`).join("")}
-    <p class="t-xs muted">Email addresses shown are placeholders for the prototype.</p>
+    ${[["Candidates", "Account help, sign-in trouble, tournament or battle issues."], ["Score disputes", "Tell us the tournament and task. We re-check it and reply with what we found."], ["Employers & colleges", "Join the hiring pilot or run a private tournament for your campus."], ["Your data", "Export or delete everything yourself in Settings → Data, or ask us here."]]
+      .map(([h, p]) => `<div class="card"><h3 class="t-h3">${h}</h3><p class="t-sm muted mt1">${p}</p></div>`).join("")}
+    <p class="t-xs muted">We usually reply within two working days, to the email you give here.</p>
   </div>
 </div></section>`,
 });
@@ -354,7 +356,7 @@ const legal = (title, eyebrow, sections) => publicPage({
   title, active: "",
   body: `
 <section class="hero" style="padding-bottom:var(--s7)"><div class="container stack">
-  <span class="badge">${eyebrow}</span><h1 class="t-display">${title}</h1><p class="t-sm muted">Effective 1 October 2026 · Prototype draft — to be reviewed by counsel before launch.</p>
+  <span class="badge">${eyebrow}</span><h1 class="t-display">${title}</h1><p class="t-sm muted">Effective 8 November 2026 · Rank Culture is in its pilot. We'll tell signed-up users before these change in any important way.</p>
 </div></section>
 <section class="section"><div class="container grid" style="grid-template-columns:240px 1fr;gap:var(--s7);align-items:start">
   <nav class="card hide-m" style="position:sticky;top:88px"><div class="label muted mb2">Sections</div><div class="stack t-sm">${sections.map((s, i) => `<a href="#s${i}">${String(i + 1).padStart(2, "0")} ${s[0]}</a>`).join("")}</div></nav>
@@ -364,19 +366,27 @@ const legal = (title, eyebrow, sections) => publicPage({
 });
 
 const terms = legal("Terms of service", "Legal", [
-  ["Who we are", ["Rank Culture runs skill tournaments and a verified ranking for candidates, and lets employers find and hire them. By creating an account you agree to these terms."]],
-  ["Fair play", ["You must complete tournaments yourself, without outside help, AI tools (unless a task allows them) or shared answers.", "We proctor tournaments with webcam checks, tab monitoring and plagiarism detection. Confirmed cheating means your score is voided and your account may be banned."]],
-  ["Your score", ["Scores are given by our AI grader and human reviewers. You can dispute any score within 7 days from your results page.", "Scores can't be bought, transferred or edited. You can retake a tournament format after 30 days."]],
-  ["Fast-tracks", ["A fast-track guarantees an interview, not a job. Employers make their own hiring decisions."]],
-  ["Payments", ["Pro is billed monthly or yearly and can be cancelled anytime. Refunds follow Indian consumer law."]],
-  ["Ending your account", ["You can delete your account from Settings at any time. We delete your data within 30 days."]],
+  ["Who we are", ["Rank Culture is a skill-ranking platform run by its founder, Nakul Chaturvedi, from India. You compete in timed tournaments and live battles, earn a rank, and can apply to roles with it. By creating an account you agree to these terms and to our <a class=\"link\" href=\"privacy.html\">privacy policy</a>."]],
+  ["Who can join", ["You must be 18 or older and give us an email address you control. One account per person."]],
+  ["Fair play", ["Do the work yourself — no outside help, no AI tools unless a task says so, and no sharing tournament questions or answers.", "Don't run more than one account, throw battles to boost someone's rating, or try to get around the timer or our systems.", "The timer runs on our server and tab switches are recorded with your entry. If we find cheating we can void scores, remove ratings and suspend accounts. You can ask us to review that decision through the contact form."]],
+  ["How scoring works", ["Multiple-choice tasks and battle questions are scored automatically on our server. Written answers are reviewed by people and can change a provisional result.", "If you think a score is wrong, tell us within 7 days through the <a class=\"link\" href=\"contact.html?topic=dispute\">contact form</a>. We'll re-check it and reply.", "Scores can't be bought, transferred or edited by you. Each tournament allows one attempt."]],
+  ["Jobs and fast-tracks", ["During the pilot, the companies and roles on the jobs board are fictional examples and applications are not sent to any employer. We'll say clearly when a real partner role goes live.", "A fast-track means your application skips resume screening. It is not a promise of an interview or a job — employers make their own hiring decisions."]],
+  ["Battles, rooms and hosted events", ["If you host an event, you're responsible for its name and who you invite. We can rename or remove events that are offensive or misleading.", "Practice bots fill empty seats; games against bots and private rooms don't change your arena rating."]],
+  ["Company-style practice packs", ["Practice packs are original questions written by us in the style of each company's publicly described test format. They are not real test questions and aren't made, endorsed or checked by those companies."]],
+  ["Your content", ["You own the answers you write. You let us store and score them, show them to you, and — only when you apply to a role — share your rank and task scores with that employer."]],
+  ["Payments", ["Nothing on Rank Culture is for sale during the pilot and we won't ask for payment details. If we introduce paid plans we'll publish their terms first."]],
+  ["Ending your account", ["You can delete your account any time in Settings → Data. It is deleted straight away. We can suspend accounts that break these terms."]],
+  ["The pilot", ["Rank Culture is new and provided as it is. Features may change, and events can be cancelled or rescheduled. To the extent the law allows, we aren't liable for indirect losses from using the service."]],
+  ["Contact", ["Questions about these terms? <a class=\"link\" href=\"contact.html?topic=other\">Send us a message</a>."]],
 ]);
 const privacy = legal("Privacy policy", "Legal", [
-  ["The short version", ["Your profile and scores are private by default. You decide who sees them. We never sell your data."]],
-  ["What we collect", ["Account details (name, email, city), your tournament answers and scores, and proctoring data during a tournament (webcam snapshots and browser activity)."]],
-  ["What recruiters see", ["Only what you make visible: your score, tier, skill breakdown and work samples. Your college, gender and age stay hidden until you accept an interview invite."]],
-  ["Proctoring data", ["Webcam snapshots are kept for 30 days for dispute review, then deleted."]],
-  ["Your rights", ["Under India's Digital Personal Data Protection Act you can access, correct, export or erase your data. Use Settings → Data, or email privacy@rankculture.in."]],
+  ["The short version", ["Your profile and scores are private by default. You choose whether your name appears on public leaderboards. We don't sell your data, show ads or use tracking cookies."]],
+  ["What we collect", ["Account details: your email, the name you give us, and — if you sign in with GitHub or Google — the name on that account.", "Profile details you choose to add: city, career stage, main field, skills and your visibility settings.", "Activity: tournament answers (including written answers), when you started and submitted, how many times you switched tabs during a tournament, battle answers and how fast you gave them, your ratings and skill stats, and job applications with any note you add.", "Messages you send us through the contact form.", "Security data: our sign-in provider logs your IP address and browser details when you sign in, to protect accounts."]],
+  ["What others can see", ["Other players in a battle see your first name and last initial and your score in that battle.", "Leaderboards show your name only if your visibility is set to Everyone; otherwise you appear as \"Hidden competitor\". Your city is shown only if you also turn on Show my city.", "\"Recruiters only\" visibility is stored for when the recruiter console opens; no recruiter can see your profile today. When you apply to a role, that employer will see your rank, task scores and note."]],
+  ["Where it's stored", ["Your data is stored by Supabase (database and sign-in) in its Mumbai region, and the site is served by Vercel. Sign-in emails are sent through Supabase's email service. These providers process data only to run Rank Culture."]],
+  ["On your device", ["We keep your sign-in session and any tournament answers you haven't submitted yet in your browser's storage, so a refresh doesn't lose your work. We use no advertising or analytics cookies."]],
+  ["How long we keep it", ["We keep your data while your account exists. Deleting your account in Settings → Data removes your profile, ranks, entries, battle history, applications and messages straight away; copies in our providers' backups expire within their normal backup cycle.", "Messages sent without an account are kept for up to 12 months."]],
+  ["Your rights", ["Under India's Digital Personal Data Protection Act, 2023 you can access, correct and erase your data and raise a grievance. Export or delete everything yourself in Settings → Data, correct your profile in Settings → Account, or <a class=\"link\" href=\"contact.html?topic=other\">contact us</a>. Our grievance contact is the founder, Nakul Chaturvedi, through the same form.", "You must be 18 or older to use Rank Culture."]],
 ]);
 
 // ---------- 404 ----------

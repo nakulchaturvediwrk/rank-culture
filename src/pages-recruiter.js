@@ -10,7 +10,7 @@ const recHeader = (active) => `
   <div class="row between mb2">${logo("recruiter.html")}<button class="icon-btn" data-close-drawer aria-label="Close">${ic("x")}</button></div>
   <a class="dl" href="recruiter.html">Talent search</a><a class="dl" href="host-tournament.html">Host tournament</a><a class="dl" href="employers.html">Plans</a><a class="dl" href="index.html">Log out</a>
 </div></div>`;
-const recPage = (title, active, body) => barePage({ title, header: "none", body: recHeader(active) + `<div class="container section-sm" style="max-width:1280px"><div class="banner amber mb3"><span><strong>Sample employer screen.</strong> The recruiter console opens to pilot partners soon — candidates and numbers here are example data.</span><a class="btn btn-sm" href="employers.html">Join the pilot</a></div>${body}</div>` });
+const recPage = (title, active, body) => barePage({ title, header: "none", body: recHeader(active) + `<div class="container section-sm" style="max-width:1280px"><div class="banner amber mb3"><span><strong>Sample employer screen.</strong> The recruiter console opens to pilot partners soon — candidates and numbers here are example data.</span><a class="btn btn-sm" href="contact.html?topic=employer">Join the pilot</a></div>${body}</div>` });
 
 const CANDS = [
   ["C-2041", "Growth Marketing", "Pune", 968, [["Copy", 98], ["Funnels", 95], ["Ads", 91]], "Open", "marketing"],
@@ -34,10 +34,10 @@ const recruiter = recPage("Talent search", "recruiter.html", `
   <aside class="card stack" style="position:sticky;top:88px">
     <div class="field"><label for="rf-s">Search</label><input class="input" id="rf-s" placeholder="Skill or city" data-search="#c-list"></div>
     <div class="field"><label>Field</label><div class="row" data-filter-group="#c-list">${[["all", "All"], ["marketing", "Marketing"], ["data", "Data"], ["product", "Product"], ["sales", "Sales"]].map(([v, l], i) => `<button class="chip ${i ? "" : "on"}" data-value="${v}" aria-pressed="${!i}">${l}</button>`).join("")}</div></div>
-    <div class="field"><label for="rf-min">Minimum score: <span class="mono" id="rf-v">700</span></label><input id="rf-min" type="range" min="400" max="950" step="10" value="700" oninput="document.getElementById('rf-v').textContent=this.value" style="accent-color:var(--blue)"></div>
+    <div class="field"><label for="rf-min">Minimum score: <span class="mono" id="rf-v">700</span></label><input id="rf-min" type="range" min="400" max="950" step="10" value="700" data-mirror="#rf-v" style="accent-color:var(--blue)"></div>
     <label class="check"><input type="checkbox" checked> Hide college (recommended)</label>
     <label class="check"><input type="checkbox"> Open to relocate</label>
-    <button class="btn btn-dark btn-block" data-toast="Filters applied">Apply</button>
+    <button class="btn btn-dark btn-block" data-toast="Sample screen — filters go live when the console opens">Apply</button>
   </aside>
   <div class="stack" id="c-list">
     ${CANDS.map(([id, f, city, s, sk, st, cat]) => `<article class="card hover" data-cat="${cat}"><div class="grid" style="grid-template-columns:auto 1fr auto;gap:var(--s5);align-items:center">
@@ -53,7 +53,7 @@ const recruiter = recPage("Talent search", "recruiter.html", `
   <h2 class="t-h2" id="iv-h">Invite to interview</h2><p class="muted t-sm">Uses 1 unlock. You'll see the candidate's name, college and contact once they accept.</p>
   <div class="field"><label for="iv-r">Role</label><select class="input" id="iv-r"><option>Growth Associate · 8–12 LPA</option><option>Performance Marketer · 10–14 LPA</option></select></div>
   <div class="field"><label for="iv-m">Message</label><textarea class="input" id="iv-m">Loved your tournament work — would you like to chat about the Growth Associate role?</textarea></div>
-  <div class="row"><button class="btn" data-close-modal>Cancel</button><button class="btn btn-primary" data-close-modal data-toast="Invite sent · 37 unlocks left">Send invite</button></div>
+  <div class="row"><button class="btn" data-close-modal>Cancel</button><button class="btn btn-primary" data-close-modal data-toast="Sample screen — no invite was sent">Send invite</button></div>
 </div></div>
 <style>@media(max-width:960px){.section-sm>.grid{grid-template-columns:1fr!important}.section-sm aside.card{position:static!important}#c-list .grid{grid-template-columns:1fr!important}}</style>`);
 
@@ -70,10 +70,10 @@ const host = recPage("Host a tournament", "host-tournament.html", `
     <div class="row between"><a class="btn btn-ghost" href="recruiter.html">Save draft</a><button class="btn btn-primary btn-lg" data-modal="launch-modal">Continue to prizes ${ic("arrow")}</button></div>
   </div>
   <aside class="card card-lg dark stack" style="position:sticky;top:88px"><div class="label" style="color:#9DB1FF">Estimate</div>
-    <div class="list t-sm" style="border-color:#2A2B30">${[["Expected players", "1,600–2,000"], ["Elite+ finishers", "~140"], ["Interviews you'll get", "Top 20"], ["Cost", "Included in Growth"]].map(([l, v]) => `<div style="border-color:#2A2B30"><span class="muted">${l}</span><span class="mono">${v}</span></div>`).join("")}</div>
-    <p class="t-xs muted">Your brand appears to every participant — most hosts also see a lift in inbound applications.</p></aside>
+    <div class="list t-sm" style="border-color:#2A2B30">${[["Expected players", "Example"], ["Elite+ finishers", "Example"], ["Interviews you'll get", "Top 20"], ["Cost", "Free in the pilot"]].map(([l, v]) => `<div style="border-color:#2A2B30"><span class="muted">${l}</span><span class="mono">${v}</span></div>`).join("")}</div>
+    <p class="t-xs muted">Your brand appears to every participant.</p></aside>
 </div>
-<div class="modal" id="launch-modal" role="dialog" aria-modal="true" aria-labelledby="lh-h"><div class="card card-lg stack"><h2 class="t-h2" id="lh-h">Sent for panel review</h2><p class="muted">Our practitioner panel reviews your tasks within 48 hours. You'll get a preview link to try the tournament yourself before it goes live.</p><button class="btn btn-primary" data-close-modal data-toast="Draft submitted for review">Done</button></div></div>
+<div class="modal" id="launch-modal" role="dialog" aria-modal="true" aria-labelledby="lh-h"><div class="card card-lg stack"><h2 class="t-h2" id="lh-h">This is a sample screen</h2><p class="muted">Nothing was submitted. Tell us about the role and we'll build the tournament with you during the pilot.</p><div class="row"><a class="btn btn-primary" href="contact.html?topic=employer">Plan a real tournament</a><button class="btn" data-close-modal>Close</button></div></div></div>
 <style>@media(max-width:960px){.section-sm>.grid{grid-template-columns:1fr!important}.section-sm aside.card{position:static!important}}</style>`);
 
 // ---------- Screen map ----------
@@ -107,4 +107,4 @@ const map = barePage({
 </div></section>`,
 });
 
-module.exports = { pages: { "recruiter.html": recruiter, "host-tournament.html": host, "map.html": map } };
+module.exports = { pages: { "recruiter.html": recruiter, "host-tournament.html": host } }; // the prototype screen map is no longer published

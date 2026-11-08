@@ -16,6 +16,14 @@
   $$("[data-close-drawer]").forEach(b => b.addEventListener("click", () => { drawer.classList.remove("open"); drawer.setAttribute("aria-hidden", "true"); }));
   document.addEventListener("keydown", e => { if (e.key === "Escape") { drawer && drawer.classList.remove("open"); $$(".modal.open").forEach(m => m.classList.remove("open")); } });
 
+  // Delegated actions (no inline event handlers, so the CSP can forbid them).
+  document.addEventListener("click", e => {
+    if (e.target.closest("[data-reload]")) { e.preventDefault(); location.reload(); }
+    const d = e.target.closest("[data-dismiss]"); if (d && d.parentElement) d.parentElement.remove();
+  });
+
+  document.addEventListener("input", e => { const m = e.target.closest("[data-mirror]"); if (m) { const t = document.querySelector(m.dataset.mirror); if (t) t.textContent = m.value; } });
+
   // Per-element behaviours. RCbind(root) re-runs them on content rendered later.
   function bind(R) {
     R = R || document;

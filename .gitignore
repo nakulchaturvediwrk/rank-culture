@@ -4,3 +4,5 @@ dist-static/
 deploy/
 .vercel/
 .DS_Store
+node_modules
+supabase/tests/package-lock.json

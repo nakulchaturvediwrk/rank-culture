@@ -40,7 +40,7 @@ const login = barePage({
     ${googleBtn}
     <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
     <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a sign-in link ${ic("arrow")}</button>
-    <p class="t-xs muted">No passwords to remember or leak. Recruiter? Employer accounts are invite-only during the pilot — <a class="link" href="employers.html">request access</a>.</p>
+    <p class="t-xs muted">By continuing you confirm you're 18 or older and agree to the <a class="link" href="terms.html">Terms</a> and <a class="link" href="privacy.html">Privacy policy</a>. No passwords to remember or leak. Recruiter? Employer accounts are invite-only during the pilot — <a class="link" href="employers.html">request access</a>.</p>
   </form>
   ${codeStep}
 </div></div></div>`,
@@ -57,7 +57,7 @@ const signup = barePage({
     ${googleBtn}
     <div class="field"><label for="a-name">Full name</label><input class="input" id="a-name" required autocomplete="name" maxlength="80"></div>
     <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-    <label class="check"><input type="checkbox" id="a-terms"> <span>I agree to the <a class="link" href="terms.html">Terms</a> and <a class="link" href="privacy.html">Privacy policy</a>, including fair-play checks.</span></label>
+    <label class="check"><input type="checkbox" id="a-terms"> <span>I'm 18 or older and agree to the <a class="link" href="terms.html">Terms</a> and <a class="link" href="privacy.html">Privacy policy</a>, including fair-play checks.</span></label>
     <button class="btn btn-primary btn-lg btn-block" type="submit">Create account ${ic("arrow")}</button>
     <p class="t-xs muted">We'll email you a link to verify the address. Your profile is private until you choose to make it public.</p>
   </form>

@@ -2,12 +2,14 @@
   "name": "rank-culture",
   "version": "0.2.0",
   "private": true,
-  "description": "Rank Culture — merit-first hiring through skill tournaments. Clickable prototype.",
+  "description": "Rank Culture \u2014 merit-first hiring through skill tournaments.",
   "author": "Nakul Chaturvedi",
   "license": "UNLICENSED",
   "homepage": "https://rank-culture.vercel.app",
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "test:db": "cd supabase/tests && npm install --no-audit --no-fund && node security.test.mjs",
+    "test:e2e": "node build.js && python3 tests/e2e.py"
   },
   "engines": {
     "node": ">=18"

@@ -86,7 +86,6 @@ const publicHeader = (active) => `
   <div class="row between mb2">${logo()}<button class="icon-btn" data-close-drawer aria-label="Close menu">${ic("x")}</button></div>
   ${publicNav.map(([h, l]) => `<a class="dl" href="${h}">${l}</a>`).join("")}
   <a class="dl" href="about.html">About</a>
-  <a class="dl" href="map.html">Prototype screen map</a>
   <a class="btn btn-primary btn-block mt3" href="signup.html">Get ranked free</a>
   <a class="btn btn-block mt1" href="login.html">Log in</a>
 </div></div>`;
@@ -103,8 +102,6 @@ const appNav = [
   ["applications.html", "Applications", "file"],
   ["leaderboard-app.html", "Leaderboard", "chart"],
   ["profile.html", "My profile", "user"],
-  ["messages.html", "Messages", "mail"],
-  ["network.html", "Rank feed", "users"],
 ];
 const appHeader = (active) => `
 <header class="header"><div class="container" style="max-width:none">
@@ -114,7 +111,6 @@ const appHeader = (active) => `
   </nav>
   <div class="header-actions">
     <a class="btn btn-sm hide-m" href="pricing.html?from=app">Pricing</a>
-    <a class="icon-btn" href="notifications.html" aria-label="Notifications">${ic("bell")}</a>
     <a class="icon-btn hide-m" href="settings.html" aria-label="Settings">${ic("gear")}</a>
     <a class="avatar hide-m" href="profile.html" aria-label="My profile" data-me="initials">··</a>
     <button class="icon-btn menu-btn" data-open-drawer aria-label="Open menu">${ic("menu")}</button>
@@ -124,9 +120,8 @@ const appHeader = (active) => `
 <div class="drawer-panel" role="dialog" aria-label="Menu">
   <div class="row between mb2">${logo("dashboard.html")}<button class="icon-btn" data-close-drawer aria-label="Close menu">${ic("x")}</button></div>
   ${appNav.map(([h, l]) => `<a class="dl" href="${h}">${l}</a>`).join("")}
-  <a class="dl" href="notifications.html">Notifications</a>
   <a class="dl" href="settings.html">Settings</a>
-  <a class="dl" href="map.html">Prototype screen map</a>
+  <a class="dl" href="contact.html">Support</a>
   <a class="dl" href="index.html" data-logout>Log out</a>
 </div></div>`;
 
@@ -185,11 +180,10 @@ const footer = () => `
       <li><a href="privacy.html">Privacy</a></li>
     </ul></div>
   </div>
-  <div class="base"><span>© 2026 Rank Culture. Made in India.</span><a href="map.html">Prototype screen map →</a></div>
+  <div class="base"><span>© 2026 Rank Culture. Made in India.</span><a href="contact.html">Contact & support</a></div>
 </div></footer>`;
 
 const scripts = () => `<div class="toast" id="toast" role="status" aria-live="polite"></div>
-<a class="proto-flag" href="map.html" title="All prototype screens">Prototype · screen map</a>
 <script src="assets/app.js"></script></body></html>`;
 
 // ---------- Page wrappers ----------

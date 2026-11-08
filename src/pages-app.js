@@ -49,8 +49,8 @@ const dashboard = appPage({
   title: "Dashboard",
   active: "dashboard.html",
   body: `
-<div class="banner blue mb3 hide" id="welcome"><span><strong>You're in, Aarav.</strong> You're registered for Growth Marketing Cup on Saturday. We'll remind you 1 hour before.</span><button class="btn btn-sm" onclick="this.parentElement.remove()">Got it</button></div>
-<script>if(location.search.includes('welcome'))document.getElementById('welcome').classList.remove('hide')</script>
+<div class="banner blue mb3 hide" id="welcome"><span><strong>You're in, Aarav.</strong> You're registered for Growth Marketing Cup on Saturday. We'll remind you 1 hour before.</span><button class="btn btn-sm" data-dismiss>Got it</button></div>
+
 ${pageHead("Good evening, Aarav", "Dashboard", "", `<label class="sr" for="role-sw">Field</label><select class="input" id="role-sw" data-role-switch style="width:auto;min-height:44px"><option value="marketing">Growth Marketing</option><option value="data">Data Analytics</option><option value="product">Product (unranked)</option></select><a class="btn btn-primary" href="arena.html">${ic("trophy")} Compete</a>`)}
 ${Object.entries(ROLES).map(([k, r], i) => roleBlock(k, r, i > 0)).join("")}
 <div class="mt4">
@@ -135,7 +135,7 @@ const tournament = appPage({
     <div class="label muted">Starts in</div>
     <div class="timer" data-countdown="${6 * 86400 / 6 * 1 + 4 * 3600 + 1240}">—</div>
     <div>${bar(81, "blue")}<div class="t-xs muted mt1">582 spots left</div></div>
-    <button class="btn btn-primary btn-lg btn-block" id="reg-btn" onclick="this.textContent='Registered ✓';this.classList.replace('btn-primary','btn-dark');toast('Registered — reminder set for 6:00 PM')">Register free</button>
+    <button class="btn btn-primary btn-lg btn-block" id="reg-btn">Register free</button>
     <a class="btn btn-block" href="live.html">Try the arena (demo)</a>
     <div class="list t-sm"><div><span class="muted">Your current rank</span><span class="mono">742</span></div><div><span class="muted">Fast-track at</span><span class="mono">Top 10%</span></div><div><span class="muted">You need</span><span class="mono">~810</span></div></div>
     <a class="link t-sm" href="drills.html">Warm up with a drill →</a>
@@ -203,7 +203,7 @@ const live = barePage({
   <h2 class="t-h2" id="lm-h">Leave the tournament?</h2><p class="muted">The timer keeps running. Your saved answers will be submitted when time ends.</p>
   <div class="row"><button class="btn" data-close-modal>Stay</button><a class="btn btn-dark" href="dashboard.html">Leave</a></div>
 </div></div>
-<a class="hide" href="offline.html" id="sim-offline">Simulate connection loss</a>`,
+`,
 });
 
 // ---------- Results ----------

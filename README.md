@@ -8,7 +8,7 @@
 
 A merit-first hiring platform for India's youth. Compete in skill tournaments built from real work, earn a verified rank out of 1000, and get fast-tracked to interviews on proof — not on degrees, connections or certificates.
 
-[**Live prototype →**](https://rank-culture.vercel.app) &nbsp;·&nbsp; [Screen map (all 39 screens)](https://rank-culture.vercel.app/map.html) &nbsp;·&nbsp; [5-minute demo path](#demo-path)
+[**Live site →**](https://rank-culture.vercel.app) &nbsp;·&nbsp; [5-minute demo path](#demo-path) &nbsp;·&nbsp; [Security & testing](#security--testing)
 
 ![Rank Culture landing page](docs/screens/index.png)
 
@@ -33,15 +33,17 @@ Bring **rank culture** — the way sport works — to hiring. Nobody asks which 
 
 ### How it works
 
-1. **Compete** — weekly tournaments built with hiring partners from tasks their team actually does (write the launch email, find the funnel leak, pick the winning ad). 40–90 minutes, free.
+1. **Compete** — weekly tournaments built from tasks the role actually does (write the launch email, find the funnel leak, pick the winning ad), plus live 1v1 and group battles every day. Free.
 2. **Rank up** — a verified score out of 1000 and a tier: Rookie → Contender → Challenger → Elite → Legend.
-3. **Get hired** — top finishers win interview fast-tracks; recruiters hire straight from the leaderboard.
+3. **Get hired** — top finishers win interview fast-tracks that skip resume screening. (Pilot: the companies on the jobs board are fictional until partners sign on.)
 
 ### Business model
 
-- **Candidates:** free forever. Pro at ₹199/month (₹99 for students) for unlimited drills, detailed score breakdowns and a top-10% interview guarantee.
+Nothing is for sale during the pilot. Planned:
+
+- **Candidates:** competing stays free. Pro at ₹199/month (₹99 for students) for personal drill plans and deeper score analytics.
 - **Employers:** free starter tier, Growth at ₹14,999/month (candidate unlocks + hosted tournaments), Enterprise custom.
-- **Campus:** free private tournaments for placement cells, Pro for every student at ₹49.
+- **Campus:** free private tournaments for placement cells.
 
 ## Screens
 
@@ -55,7 +57,7 @@ Bring **rank culture** — the way sport works — to hiring. Nobody asks which 
 
 <p align="center"><img src="docs/screens/mobile-dashboard.png" width="280" alt="Mobile dashboard"></p>
 
-**39 screens in total:** marketing site, sign-up and 3-step onboarding, candidate app (dashboard, tournaments, live arena, results, drills, jobs, applications, leaderboard, profile, messages, notifications, rank feed, company reviews, settings), employer side (talent search, host a hiring tournament) and system states (loading, empty, offline mid-tournament, 404).
+**Live screens:** marketing site, sign-up and 3-step onboarding, dashboard, tournaments, live arena, results, drills, battles (quick match, private rooms, hosted events, knockouts), jobs, applications, leaderboards, profile, settings and support. Messages, notifications, rank feed, company reviews and the recruiter console are sample screens (clearly bannered) and aren't linked from the app yet.
 
 ### Demo path
 
@@ -83,7 +85,8 @@ src/
   pages-auth.js        sign up, log in, reset password, onboarding 1–3
   pages-app.js         dashboard, tournaments, details, live arena, results, drills
   pages-app2.js        jobs, applications, profile, messages, notifications, feed, settings, states
-  pages-recruiter.js   talent search, host a tournament, screen map
+  pages-recruiter.js   talent search, host a tournament (sample screens)
+  rc.js / rc-battle.js auth, route guards and live data (Supabase) for every app screen
   browser.js           renders any page in the browser from the same generators
 assets/
   styles.css           the design system (tokens + components)
@@ -93,13 +96,21 @@ build.js               builds, lints the design system, and emits the deploy bun
 
 ```bash
 npm run build      # → dist/ (per-page), dist-static/ (full HTML), deploy/ (what Vercel serves)
+npm run test:db    # replays every migration on PGlite and attacks it as anon / other users (93 checks)
+npm run test:e2e   # every page, button and core flow in Chrome, signed in/out, desktop/mobile
 ```
 
 Deployed on Vercel: `node build.js`, output directory `deploy/`. Every URL is rewritten to one page stub that renders the right screen.
 
+## Security & testing
+
+- **Database:** Supabase Postgres with row-level security on every table. Scores, ratings, battle answers and applications are written only by server functions; answer keys never reach the browser. Tournament prompts unlock only after your own timer starts. Optional TOTP two-step verification is enforced in the database. Least-privilege grants (no direct writes to scores or applications).
+- **Browser:** strict Content-Security-Policy with no `unsafe-inline` or `unsafe-eval` for scripts (inline scripts are allowed by SHA-256 hash, generated at build), HSTS, `X-Frame-Options: DENY`, `nosniff`, tight Referrer and Permissions policies. All user content is escaped before rendering; the build fails on inline event handlers or `javascript:` links.
+- **Tests:** `supabase/tests/security.test.mjs` (database: isolation, privilege, integrity, rate limits, account deletion) and `tests/e2e.py` (UI: 4 crawl modes, click-through of every control, 15 end-to-end flows against a mocked API).
+
 ## Status
 
-This is a **clickable prototype** for feedback from faculty and mentors — not a production app. Tournament data, rankings, companies and metrics shown are illustrative; company names are fictional.
+Pilot. Accounts, tournaments, battles, leaderboards, drills, applications and support messages are live. Companies on the jobs board are fictional until real hiring partners join, and applications aren't sent anywhere yet — the site says so where it matters.
 
 ## Author
 
