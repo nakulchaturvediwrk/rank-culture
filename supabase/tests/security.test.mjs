@@ -84,7 +84,9 @@ await throws("aal1 session can't call RPCs", M, `select public.start_entry('grow
 ok("aal2 session sees profile", (await rows({ ...M, aal: "aal2" }, `select * from public.profiles`)).length === 1);
 
 console.log("6. Leaderboard privacy");
+if (!process.env.UPTO || Number(process.env.UPTO) >= 13) await db.query(`select public.refresh_public_cache()`); // public boards are cached for up to a minute
 await su(`insert into public.ratings (user_id, field, score) values ($1, 'marketing', 700)`, [B.id]);
+await db.query(`select public.refresh_public_cache()`);
 const lb = await rows(null, `select * from public.leaderboard_v2('overall', null, null, 10)`);
 ok("private user shown as Hidden competitor", lb.some(r => r.name === "Hidden competitor") && !JSON.stringify(lb).includes("Asha"), JSON.stringify(lb));
 ok("public user named", lb.some(r => /Bilal/.test(r.name)));

@@ -19,15 +19,17 @@ const googleBtn = `<button class="btn btn-lg btn-block" type="button" data-oauth
 <button class="btn btn-lg btn-block" type="button" data-oauth="github"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg> Continue with GitHub</button>
 <div class="divider">or with your email</div>`;
 
-// Passwordless: Google, or a one-time code / magic link sent to the email.
-const codeStep = `
+// Email + password is the main way in; a one-time sign-in link stays as a fallback.
+const pwField = (id, label, auto, hint = "") => `<div class="field"><label for="${id}">${label}</label><div class="row" style="gap:var(--s2);flex-wrap:nowrap"><input class="input" id="${id}" type="password" required autocomplete="${auto}" minlength="8" maxlength="72" style="flex:1"><button class="btn" type="button" data-reveal="#${id}" aria-label="Show password">Show</button></div>${hint ? `<span class="hint t-xs muted">${hint}</span>` : ""}</div>`;
+const PW_HINT = "At least 8 characters, with a letter and a number.";
+const codeStep = (what) => `
 <form class="stack hide" id="code-form" novalidate>
-  <div class="card soft"><div class="row">${ic("mail")}<p class="t-sm">We sent a sign-in link to <strong id="sent-to"></strong>. Open it <strong>in this browser</strong> to continue. It expires in 1 hour — check spam if it hasn't arrived in a minute.</p></div></div>
-  <details class="t-sm"><summary class="muted" style="cursor:pointer">Email shows a code instead?</summary>
-    <div class="stack mt2"><div class="field"><label for="a-code">Code from the email</label><input class="input mono" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
-    <button class="btn btn-primary btn-block" type="submit">Continue ${ic("arrow")}</button></div></details>
-  <button class="btn btn-ghost btn-block" type="button" id="a-resend">Use a different email or resend</button>
+  <div class="card soft"><div class="row">${ic("mail")}<p class="t-sm">We sent ${what} to <strong id="sent-to"></strong>. Open the link <strong>in this browser</strong>, or type the code from the email below. Check spam if it hasn't arrived in a minute.</p></div></div>
+  <div class="field"><label for="a-code">Code from the email</label><input class="input mono" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
+  <button class="btn btn-primary btn-block" type="submit">Continue ${ic("arrow")}</button>
+  <div class="row between"><button class="btn btn-ghost btn-sm" type="button" id="a-resend">Resend email</button><button class="btn btn-ghost btn-sm" type="button" id="a-back">Use a different email</button></div>
 </form>`;
+const legalLine = `<p class="t-xs muted">By continuing you confirm you're 18 or older and agree to the <a class="link" href="terms.html">Terms</a> and <a class="link" href="privacy.html">Privacy policy</a>.</p>`;
 
 const login = barePage({
   title: "Log in",
@@ -36,13 +38,21 @@ const login = barePage({
 <div class="auth-form"><div class="stack-lg">
   <div class="stack"><h1 class="t-h1">Log in</h1><p class="muted t-sm">New here? <a class="link" href="signup.html">Create a free account</a></p></div>
   <div id="auth-msg"></div>
-  <form class="stack" id="otp-form" novalidate>
+  <form class="stack" id="pw-form" novalidate>
     ${googleBtn}
-    <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a sign-in link ${ic("arrow")}</button>
-    <p class="t-xs muted">By continuing you confirm you're 18 or older and agree to the <a class="link" href="terms.html">Terms</a> and <a class="link" href="privacy.html">Privacy policy</a>. No passwords to remember or leak. Recruiter? Employer accounts are invite-only during the pilot — <a class="link" href="employers.html">request access</a>.</p>
+    <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="username" placeholder="you@example.com"></div>
+    ${pwField("a-pass", "Password", "current-password")}
+    <div class="row between t-sm"><a class="link" href="forgot-password.html">Forgot password?</a><button class="link" type="button" id="a-link-mode">Email me a sign-in link instead</button></div>
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Log in ${ic("arrow")}</button>
+    ${legalLine}
+    <p class="t-xs muted">Recruiter? Employer accounts are invite-only during the pilot — <a class="link" href="contact.html?topic=employer">request access</a>.</p>
   </form>
-  ${codeStep}
+  <form class="stack hide" id="otp-form" novalidate>
+    <div class="field"><label for="a-email2">Email</label><input class="input" id="a-email2" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a sign-in link ${ic("arrow")}</button>
+    <button class="btn btn-ghost btn-block" type="button" id="a-pw-mode">Log in with a password instead</button>
+  </form>
+  ${codeStep("a sign-in link")}
 </div></div></div>`,
 });
 
@@ -53,27 +63,48 @@ const signup = barePage({
 <div class="auth-form"><div class="stack-lg">
   <div class="stack"><h1 class="t-h1">Get ranked free</h1><p class="muted t-sm">Already competing? <a class="link" href="login.html">Log in</a></p></div>
   <div id="auth-msg"></div>
-  <form class="stack" id="otp-form" novalidate>
+  <form class="stack" id="pw-form" novalidate>
     ${googleBtn}
     <div class="field"><label for="a-name">Full name</label><input class="input" id="a-name" required autocomplete="name" maxlength="80"></div>
     <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+    ${pwField("a-pass", "Create a password", "new-password", PW_HINT)}
     <label class="check"><input type="checkbox" id="a-terms"> <span>I'm 18 or older and agree to the <a class="link" href="terms.html">Terms</a> and <a class="link" href="privacy.html">Privacy policy</a>, including fair-play checks.</span></label>
     <button class="btn btn-primary btn-lg btn-block" type="submit">Create account ${ic("arrow")}</button>
-    <p class="t-xs muted">We'll email you a link to verify the address. Your profile is private until you choose to make it public.</p>
+    <p class="t-xs muted">Your profile is private until you choose to make it public.</p>
   </form>
-  ${codeStep}
+  ${codeStep("a confirmation link")}
 </div></div></div>`,
 });
 
 const forgot = barePage({
-  title: "No passwords",
+  title: "Reset your password",
   body: `
-<div class="auth">${authSide("Locked out? Not possible here.", "Rank Culture doesn't use passwords, so there's nothing to reset.")}
+<div class="auth">${authSide("Locked out? Happens to everyone.", "We'll email you a link to set a new password. Your rank and history stay exactly as they are.")}
 <div class="auth-form"><div class="stack-lg">
   <a class="link" href="login.html">${ic("back")} Back to log in</a>
-  <div class="stack"><h1 class="t-h1">Just log in with a link</h1><p class="muted">Enter your email on the log-in page and we'll send a fresh sign-in link. Signed up with Google? Use the Google button.</p></div>
-  <a class="btn btn-primary btn-lg btn-block" href="login.html">Go to log in</a>
+  <div class="stack"><h1 class="t-h1">Reset your password</h1><p class="muted">Enter the email you signed up with. Signed up with Google or GitHub, or never set a password? This sets one for you.</p></div>
+  <div id="auth-msg"></div>
+  <form class="stack" id="reset-form" novalidate>
+    <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a reset link ${ic("arrow")}</button>
+  </form>
+  <div class="card soft hide" id="reset-sent"><div class="row">${ic("mail")}<p class="t-sm">If an account exists for <strong id="sent-to"></strong>, a reset link is on its way. Open it <strong>in this browser</strong>. Check spam if it hasn't arrived in a minute.</p></div></div>
   <p class="t-sm muted">Lost access to your email? <a class="link" href="contact.html">Contact support</a>.</p>
+</div></div></div>`,
+});
+
+const resetPw = barePage({
+  title: "Set a new password",
+  body: `
+<div class="auth">${authSide("Almost there.", "Choose a new password and you're back in.")}
+<div class="auth-form"><div class="stack-lg">
+  <div class="stack"><h1 class="t-h1">Set a new password</h1><p class="muted t-sm" id="np-for">Checking your reset link…</p></div>
+  <div id="auth-msg"></div>
+  <form class="stack hide" id="np-form" novalidate>
+    ${pwField("np-pass", "New password", "new-password", PW_HINT)}
+    ${pwField("np-pass2", "Type it again", "new-password")}
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Save password and continue ${ic("arrow")}</button>
+  </form>
 </div></div></div>`,
 });
 
@@ -125,4 +156,4 @@ const ob3 = obShell(3, `
   <div class="row between bt" style="padding-top:var(--s5)"><a class="btn btn-ghost" href="onboarding-2.html">${ic("back")} Back</a><div class="row"><a class="btn" href="dashboard.html" id="ob3-skip">Skip for now</a><a class="btn btn-primary btn-lg" id="ob3-next" href="dashboard.html?welcome=1" disabled>Register & finish ${ic("arrow")}</a></div></div>
 </div>`);
 
-module.exports = { pages: { "login.html": login, "signup.html": signup, "forgot-password.html": forgot, "onboarding-1.html": ob1, "onboarding-2.html": ob2, "onboarding-3.html": ob3, "auth-callback.html": callback, "mfa.html": mfa } };
+module.exports = { pages: { "login.html": login, "signup.html": signup, "forgot-password.html": forgot, "reset-password.html": resetPw, "onboarding-1.html": ob1, "onboarding-2.html": ob2, "onboarding-3.html": ob3, "auth-callback.html": callback, "mfa.html": mfa } };
