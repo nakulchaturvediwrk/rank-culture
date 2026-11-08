@@ -238,6 +238,17 @@ function authPage(mode) {
   $("#a-back").addEventListener("click", back);
 }
 
+async function afterSignIn() {
+  const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (data && data.nextLevel === "aal2" && data.currentLevel !== "aal2") return go("mfa.html");
+  const { data: { user } } = await sb.auth.getUser();
+  const p = await q(sb.from("profiles").select("onboarded").eq("id", user.id).single());
+  let next = null; try { next = safeNext(localStorage.getItem("rc-next")); localStorage.removeItem("rc-next"); } catch (e) {}
+  return go(p.onboarded ? next || "dashboard.html" : "onboarding-1.html");
+}
+
+const H = {}; // page handlers
+
 H["forgot-password.html"] = async () => {
   const form = $("#reset-form");
   form.addEventListener("submit", async e => {
@@ -276,16 +287,6 @@ H["reset-password.html"] = async () => {
   });
 };
 
-async function afterSignIn() {
-  const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (data && data.nextLevel === "aal2" && data.currentLevel !== "aal2") return go("mfa.html");
-  const { data: { user } } = await sb.auth.getUser();
-  const p = await q(sb.from("profiles").select("onboarded").eq("id", user.id).single());
-  let next = null; try { next = safeNext(localStorage.getItem("rc-next")); localStorage.removeItem("rc-next"); } catch (e) {}
-  return go(p.onboarded ? next || "dashboard.html" : "onboarding-1.html");
-}
-
-const H = {}; // page handlers
 
 H["auth-callback.html"] = async () => {
   const p = params(), hp = new URLSearchParams(location.hash.slice(1));
