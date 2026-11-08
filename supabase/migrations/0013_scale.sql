@@ -13,9 +13,11 @@ alter table public.public_cache enable row level security; -- server-only
 revoke all on public.public_cache from anon, authenticated;
 
 -- Live versions (unchanged logic), used by the refresher and by signed-in users.
-alter function public.site_stats() rename to _site_stats_live;
-alter function public.tournament_counts() rename to _tournament_counts_live;
-alter function public.leaderboard_v2(text, text, text, integer) rename to _leaderboard_live;
+do $$ begin  -- re-runnable
+  if to_regprocedure('public._site_stats_live()') is null then alter function public.site_stats() rename to _site_stats_live; end if;
+  if to_regprocedure('public._tournament_counts_live()') is null then alter function public.tournament_counts() rename to _tournament_counts_live; end if;
+  if to_regprocedure('public._leaderboard_live(text, text, text, integer)') is null then alter function public.leaderboard_v2(text, text, text, integer) rename to _leaderboard_live; end if;
+end $$;
 revoke all on function public._site_stats_live(), public._tournament_counts_live(), public._leaderboard_live(text, text, text, integer) from public, anon, authenticated;
 
 create or replace function public.refresh_public_cache() returns void
