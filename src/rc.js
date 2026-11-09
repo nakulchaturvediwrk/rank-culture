@@ -177,17 +177,20 @@ const authMsg = (html, tone = "red") => { const m = $("#auth-msg"); if (m) m.inn
 const NO_ACCOUNT = /signups not allowed|user not found/i;
 
 // Cloudflare Turnstile (free). Off until CFG.turnstileSiteKey is set; then Supabase's CAPTCHA check can be switched on.
-let cfWidget = null, cfWait = null;
+let cfWidget = null, cfWait = null, cfLoad = null;
 const captcha = async () => {
   if (!CFG.turnstileSiteKey) return undefined;
-  if (!window.turnstile) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = ok; s.onerror = () => no(new Error("Security check didn't load. Check your connection, or turn off blockers for this site.")); document.head.appendChild(s); });
-  let box = document.getElementById("cf-box");
-  if (!box) { box = document.createElement("div"); box.id = "cf-box"; box.className = "mt2"; const m = $("#auth-msg") || main(); m.insertAdjacentElement("afterend", box); }
-  const token = new Promise(ok => { cfWait = ok; });
-  if (cfWidget === null) cfWidget = window.turnstile.render(box, { sitekey: CFG.turnstileSiteKey, appearance: "interaction-only", execution: "execute", callback: t => cfWait && cfWait(t), "error-callback": () => cfWait && cfWait(undefined) });
-  else window.turnstile.reset(cfWidget);
-  window.turnstile.execute(cfWidget);
-  return token;
+  try {
+    if (!window.turnstile) await (cfLoad = cfLoad || new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = ok; s.onerror = no; document.head.appendChild(s); }));
+    let box = document.getElementById("cf-box");
+    if (!box) { box = document.createElement("div"); box.id = "cf-box"; box.className = "mt2"; const m = $("#auth-msg") || main(); m.insertAdjacentElement("afterend", box); }
+    // Never leave a button spinning: give up after 20 s and let Supabase say what's wrong.
+    const token = new Promise(ok => { cfWait = ok; setTimeout(() => ok(undefined), 20000); });
+    if (cfWidget === null) cfWidget = window.turnstile.render(box, { sitekey: CFG.turnstileSiteKey, appearance: "interaction-only", execution: "execute", callback: t => cfWait && cfWait(t), "error-callback": () => { if (cfWait) cfWait(undefined); } });
+    else window.turnstile.reset(cfWidget);
+    window.turnstile.execute(cfWidget);
+    return await token;
+  } catch (e) { cfLoad = null; return undefined; }
 };
 function authPage(mode) {
   const next = safeNext(params().get("next"));
