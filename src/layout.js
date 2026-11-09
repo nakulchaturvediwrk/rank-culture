@@ -105,6 +105,7 @@ const ME = { name: "Aarav Mehta", initials: "AM", score: 742, tier: "Challenger"
 
 const appNav = [
   ["dashboard.html", "Dashboard", "home"],
+  ["path.html", "My path", "target"],
   ["arena.html", "Tournaments", "trophy"],
   ["battles.html", "Battles", "swords"],
   ["drills.html", "Drills", "bolt"],
@@ -186,6 +187,7 @@ const footer = () => `
     <div><h4>Company</h4><ul>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
+      <li><a href="feedback.html">Feedback</a></li>
       <li><a href="terms.html">Terms</a></li>
       <li><a href="privacy.html">Privacy</a></li>
     </ul></div>

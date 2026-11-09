@@ -18,6 +18,11 @@ export async function makeDb(migDir, { upTo = 99 } = {}) {
     create function auth.uid() returns uuid language sql stable as $$ select nullif(auth.jwt() ->> 'sub', '')::uuid $$;
     create function auth.role() returns text language sql stable as $$ select auth.jwt() ->> 'role' $$;
     create function cron.schedule(a text, b text, c text) returns bigint language sql as $$ select 1::bigint $$;
+    create table cron.job (jobid bigint, jobname text);
+    create function cron.unschedule(j bigint) returns boolean language sql as $$ select true $$;
+    create schema net; create table net.sent (url text, headers jsonb, body jsonb);
+    create function net.http_post(url text, headers jsonb, body jsonb, timeout_milliseconds int) returns bigint language sql as $$ insert into net.sent values (url, headers, body); select 1::bigint $$;
+    create schema vault; create table vault.decrypted_secrets (name text, decrypted_secret text);
     -- Supabase default: anon/authenticated get full table grants on new public tables, execute on functions.
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
     alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
@@ -25,7 +30,7 @@ export async function makeDb(migDir, { upTo = 99 } = {}) {
   `);
   const files = fs.readdirSync(migDir).filter(f => /^\d{4}_.*\.sql$/.test(f)).sort().filter(f => Number(f.slice(0, 4)) <= upTo);
   for (const f of files) {
-    let sql = fs.readFileSync(path.join(migDir, f), "utf8").replace(/create extension if not exists pg_cron;?/gi, "");
+    let sql = fs.readFileSync(path.join(migDir, f), "utf8").replace(/create extension if not exists pg_cron;?/gi, "").replace(/create extension if not exists pg_net[^;]*;/gi, "");
     try { await db.exec(sql); } catch (e) { throw new Error(`${f}: ${e.message}`); }
   }
   return db;

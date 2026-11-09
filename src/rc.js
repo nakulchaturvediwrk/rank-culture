@@ -12,11 +12,11 @@ const sb = createClient(CFG.url, CFG.key, {
 const PROTECTED = new Set(["onboarding-1.html", "onboarding-2.html", "onboarding-3.html", "dashboard.html", "arena.html", "tournament.html",
   "live.html", "results.html", "drills.html", "jobs.html", "job.html", "applications.html", "applications-empty.html", "leaderboard-app.html",
   "profile.html", "messages.html", "notifications.html", "network.html", "companies.html", "settings.html", "mfa.html",
-  "battles.html", "battle.html", "knockout.html"]);
+  "battles.html", "battle.html", "knockout.html", "path.html"]);
 // Pages whose <main> is rendered entirely from live data (prototype markup is never shown).
 const RENDERED = new Set(["dashboard.html", "arena.html", "tournament.html", "live.html", "results.html", "jobs.html", "job.html",
   "applications.html", "applications-empty.html", "leaderboard-app.html", "profile.html", "settings.html", "mfa.html", "auth-callback.html", "drills.html",
-  "battles.html", "battle.html", "knockout.html"]);
+  "battles.html", "battle.html", "knockout.html", "path.html", "review.html"]);
 const SAMPLE = new Set(["messages.html", "notifications.html", "network.html", "companies.html"]);
 
 const FIELDS = { marketing: "Marketing", data: "Data & analytics", product: "Product", sales: "Sales", ops: "Operations", design: "Design", tech: "Tech", hr: "People ops", finance: "Finance" };
@@ -376,13 +376,18 @@ H["mfa.html"] = async () => {
 H["onboarding-1.html"] = async () => {
   const p = ME.profile;
   $("#ob-city").value = p.city || ""; if (p.stage) $("#ob-stage").value = p.stage;
+  sb.rpc("path_state").then(({ data }) => { if (data && data.months) $("#ob-months").value = String(data.months); });
   const opts = $$('[data-options] .option');
   if (p.field) { const i = FIELD_ORDER.indexOf(p.field); if (opts[i]) opts[i].click(); }
   $("#ob1-next").addEventListener("click", async e => {
     e.preventDefault();
     const i = opts.findIndex(o => o.classList.contains("selected")); if (i < 0) return toast("Pick your main field");
     const city = $("#ob-city").value.trim(); if (!city) { $("#ob-city").classList.add("error"); return toast("Enter your city"); }
-    try { await q(sb.from("profiles").update({ field: FIELD_ORDER[i], city: city.slice(0, 60), stage: $("#ob-stage").value }).eq("id", ME.user.id)); location.href = "onboarding-2.html"; }
+    try {
+      await q(sb.from("profiles").update({ field: FIELD_ORDER[i], city: city.slice(0, 60), stage: $("#ob-stage").value }).eq("id", ME.user.id));
+      await q(sb.rpc("set_path", { p_field: FIELD_ORDER[i], p_months: Number($("#ob-months").value) }));
+      location.href = "onboarding-2.html";
+    }
     catch (err) { toast(friendly(err)); }
   });
 };
@@ -592,7 +597,8 @@ H["results.html"] = async () => {
   <div class="stack">${claimable.length ? `<div class="card card-lg stack"><h2 class="t-h3">Claim your fast-tracks</h2><p class="t-sm muted">Your score clears the bar for these roles. Pick any — they skip resume screening.</p><div class="stack" data-options="multi" id="claim">${claimable.map(j => `<button class="option" style="padding:var(--s3)" aria-pressed="false" data-job="${esc(j.id)}"><strong class="t-sm">${esc(j.company)}</strong><div class="t-xs muted">${esc(j.role)} · ${esc(j.salary)}</div></button>`).join("")}</div><button class="btn btn-primary btn-block" id="claim-btn">Claim fast-tracks</button></div>`
     : jobs.length ? `<div class="card card-lg stack"><h2 class="t-h3">Hiring from this tournament</h2><div class="list t-sm">${jobs.map(j => `<div><span>${esc(j.company)}<br><span class="t-xs muted">${esc(j.role)}</span></span><span class="mono t-xs">${applied.has(j.id) ? "Applied" : `needs ${j.min_rank}`}</span></div>`).join("")}</div></div>` : ""}
     <div class="card stack"><h2 class="t-h3">Close the gap</h2><p class="t-sm muted">Drills target the tasks where you dropped points.</p><a class="btn btn-block" href="drills.html">Do a drill</a></div>
-    <div class="card stack"><button class="btn btn-block" id="share">${ic("send")} Copy my rank card</button><a class="btn btn-ghost btn-block" href="contact.html?topic=dispute">Dispute a score</a></div></div></div>`);
+    <div class="card stack"><button class="btn btn-block" id="share">${ic("send")} Copy my rank card</button><a class="btn btn-ghost btn-block" href="contact.html?topic=dispute">Dispute a score</a></div>
+    <div data-fb-slot data-kind="tournament" data-target="${esc(id)}" data-title="How was this tournament?"></div></div></div>`);
   const cb = $("#claim-btn");
   if (cb) cb.addEventListener("click", async () => {
     const picks = $$("#claim .option.selected").map(o => o.dataset.job); if (!picks.length) return toast("Pick at least one company");
@@ -827,6 +833,7 @@ H["contact.html"] = async signedIn => {
 };
 
 const BX = {};
+require("./rc-path")(H, Object.assign(BX, { sb, $, $$, esc, q, render, toast, busy, friendly, main, params, ic, pageHead, FIELDS, n, bar, me: () => ME }));
 require("./rc-battle")(H, Object.assign(BX, { sb, $, $$, esc, q, render, toast, busy, friendly, modal, main, params, go, ic, pageHead, tierBadge, FIELDS, n, fmt, errorState, bar,
   me: () => ME, bestField: () => bestField() }));
 

@@ -13,6 +13,7 @@ const pages = Object.assign({},
   require("./src/pages-app2").pages,
   require("./src/pages-recruiter").pages,
   require("./src/pages-battle").pages,
+  require("./src/pages-path").pages,
 );
 
 // Each deployed page is a tiny stub: real <head> (title, meta, fonts, CSS) + a call

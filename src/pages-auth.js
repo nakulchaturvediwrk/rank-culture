@@ -139,8 +139,10 @@ const obShell = (step, body) => barePage({
 const ob1 = obShell(1, `
 <div class="stack-lg">
   <div class="stack"><h1 class="t-h1">What do you want to get hired for?</h1><p class="lead">Pick your main field. You can compete in others later.</p></div>
-  <div class="grid g2"><div class="field"><label for="ob-city">City</label><input class="input" id="ob-city" maxlength="60" placeholder="e.g. Kota" autocomplete="address-level2"></div>
-    <div class="field"><label for="ob-stage">I am</label><select class="input" id="ob-stage"><option value="college">In college</option><option value="grad_0_2">Graduated 0–2 yrs</option><option value="working_2_plus">Working 2+ yrs</option><option value="switching">Switching careers</option></select></div></div>
+  <div class="grid g3"><div class="field"><label for="ob-city">City</label><input class="input" id="ob-city" maxlength="60" placeholder="e.g. Kota" autocomplete="address-level2"></div>
+    <div class="field"><label for="ob-stage">I am</label><select class="input" id="ob-stage"><option value="college">In college</option><option value="grad_0_2">Graduated 0–2 yrs</option><option value="working_2_plus">Working 2+ yrs</option><option value="switching">Switching careers</option></select></div>
+    <div class="field"><label for="ob-months">Job-ready in</label><select class="input" id="ob-months">${Array.from({ length: 10 }, (_, i) => i + 3).map(m => `<option value="${m}"${m === 6 ? " selected" : ""}>${m} months</option>`).join("")}</select></div></div>
+  <p class="t-xs muted">We'll build a week-by-week path to get you interview-ready in that time. You can change it later in My path.</p>
   <div class="grid g3" data-options="single" data-next="#ob1-next">
     ${[["Marketing", "Growth, content, performance, brand", "up"], ["Data & analytics", "SQL, Excel, dashboards, insights", "chart"], ["Product", "APM, PM, product ops", "target"], ["Sales", "BDR, account exec, partnerships", "send"], ["Operations", "Supply chain, D2C ops, founder's office", "grid"], ["Design", "UI, UX, visual, motion", "star"], ["Tech", "Backend, frontend, QA, DevOps", "bolt"], ["People ops", "Recruiting, HRBP, L&D", "users"], ["Finance", "FP&A, analyst, CA track", "file"]]
       .map(([h, p, i]) => `<button class="option" aria-pressed="false"><div class="row between"><span class="t-h3">${h}</span>${ic(i)}</div><p class="t-sm muted mt1">${p}</p></button>`).join("")}
