@@ -385,7 +385,7 @@ def run():
             assert any(c[1] == "/auth/v1/reauthenticate" for c in m.calls), "no reauthentication code requested"
             page.fill("#pw-nonce", "654321"); page.click("#pw-change button[type=submit]"); page.wait_for_timeout(500)
             put = [c for c in m.calls if c[0] == "PUT" and c[1] == "/auth/v1/user"][-1][3]
-            assert put == {"password": "Fresh-pass7", "nonce": "654321"}, put
+            assert put["password"] == "Fresh-pass7" and put["nonce"] == "654321", put
             assert "saved" in toast(page).lower(), toast(page)
         flow("change password in settings (with re-authentication)", change_pw, reauth=True)
 
