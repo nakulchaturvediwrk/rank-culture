@@ -5,6 +5,7 @@
 --    study them for days, then start the clock. Now prompts unlock only after start_entry()
 --    (or once the tournament has closed). Task titles for the detail page come from tournament_tasks().
 drop policy if exists "open questions readable" on public.questions;
+drop policy if exists "questions after my timer starts" on public.questions; -- safe to re-run
 create policy "questions after my timer starts" on public.questions for select to authenticated using (
   (select public.aal_ok()) and (
     exists (select 1 from public.registrations r
