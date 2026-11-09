@@ -59,12 +59,12 @@ const head = (title, desc) => `<!doctype html>
 <meta name="theme-color" content="#0B0B0C">
 <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/logo-180.png">
-<meta property="og:image" content="https://rank-culture.vercel.app/assets/og.png">
+<meta property="og:image" content="https://rankculture.in/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="The Rank Culture">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://rank-culture.vercel.app/assets/og.png">
+<meta name="twitter:image" content="https://rankculture.in/assets/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">

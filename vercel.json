@@ -1,6 +1,19 @@
 {
   "buildCommand": "node build.js",
   "outputDirectory": "deploy",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "rank-culture.vercel.app"
+        }
+      ],
+      "destination": "https://rankculture.in/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!assets/).*)",
