@@ -31,6 +31,13 @@ CSP = HEADERS["Content-Security-Policy"]
 class H(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *a, **k): super().__init__(*a, directory=DEP, **k)
     def log_message(self, *a): pass
+    def do_GET(self):
+        # Vercel serves its analytics script itself; stand in with an empty script.
+        if urllib.parse.urlparse(self.path).path == "/_vercel/insights/script.js":
+            body = b"/* vercel analytics stub */"
+            self.send_response(200); self.send_header("Content-Type", "application/javascript")
+            self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body); return
+        return super().do_GET()
     def translate_path(self, path):
         p = urllib.parse.urlparse(path).path
         if not p.startswith("/assets/"): p = "/index.html"

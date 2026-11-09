@@ -70,6 +70,7 @@ const head = (title, desc) => `<!doctype html>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
 <script src="assets/shell.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>`;
 
 // ---------- Public (logged-out) header ----------
