@@ -44,6 +44,8 @@ const safeNext = v => (v && /^[a-z0-9-]+\.html(\?[\w=&%.-]*)?$/i.test(v) ? v : n
 const here = () => (location.pathname.split("/").pop() || "index.html") + location.search;
 const friendly = e => {
   const m = (e && (e.message || e.error_description || e.msg)) || String(e);
+  if (/reauth required/i.test(m)) return "For your safety, please log in again, then delete your account.";
+  if (/captcha/i.test(m)) return "Please complete the security check and try again.";
   if (/rate limit|too many/i.test(m)) return "Too many attempts. Please wait a minute and try again.";
   if (/invalid login credentials/i.test(m)) return "Wrong email or password.";
   if (/token.*(expired|invalid)|otp.*(expired|invalid)|expired.*(token|otp)/i.test(m)) return "That code is wrong or has expired. Check the latest email, or resend.";
@@ -164,11 +166,33 @@ const pwProblem = (pw, email) => {
   if (email && pw.toLowerCase() === email.toLowerCase()) return "Don't use your email as your password.";
   return null;
 };
+// Messages the login page may show from ?error=. Anything else in the URL is ignored (no text injection).
+const AUTH_ERRORS = {
+  link: "That sign-in link has expired or was opened in a different browser. Request a new one, and open it in the same browser you requested it from.",
+  failed: "Sign-in didn't complete. Please try again.",
+};
 const authMsg = (html, tone = "red") => { const m = $("#auth-msg"); if (m) m.innerHTML = html ? `<div class="banner ${tone}">${html}</div>` : ""; };
+// Supabase's reply when a code is requested for an email with no account — treated as "sent" so the page
+// never reveals who has an account.
+const NO_ACCOUNT = /signups not allowed|user not found/i;
+
+// Cloudflare Turnstile (free). Off until CFG.turnstileSiteKey is set; then Supabase's CAPTCHA check can be switched on.
+let cfWidget = null, cfWait = null;
+const captcha = async () => {
+  if (!CFG.turnstileSiteKey) return undefined;
+  if (!window.turnstile) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = ok; s.onerror = () => no(new Error("Security check didn't load. Check your connection, or turn off blockers for this site.")); document.head.appendChild(s); });
+  let box = document.getElementById("cf-box");
+  if (!box) { box = document.createElement("div"); box.id = "cf-box"; box.className = "mt2"; const m = $("#auth-msg") || main(); m.insertAdjacentElement("afterend", box); }
+  const token = new Promise(ok => { cfWait = ok; });
+  if (cfWidget === null) cfWidget = window.turnstile.render(box, { sitekey: CFG.turnstileSiteKey, appearance: "interaction-only", execution: "execute", callback: t => cfWait && cfWait(t), "error-callback": () => cfWait && cfWait(undefined) });
+  else window.turnstile.reset(cfWidget);
+  window.turnstile.execute(cfWidget);
+  return token;
+};
 function authPage(mode) {
   const next = safeNext(params().get("next"));
   try { if (next) localStorage.setItem("rc-next", next); else localStorage.removeItem("rc-next"); } catch (e) {}
-  const err = params().get("error"); if (err) authMsg(esc(err));
+  const err = params().get("error"); if (err) authMsg(AUTH_ERRORS[err] || AUTH_ERRORS.failed);
   $$("[data-oauth]").forEach(b => b.addEventListener("click", () => startOAuth(b.dataset.oauth, b)));
   const pwForm = $("#pw-form"), otpForm = $("#otp-form"), codeForm = $("#code-form");
   let email = "", codeType = "email";
@@ -176,9 +200,9 @@ function authPage(mode) {
   const back = () => { codeForm.classList.add("hide"); (pwForm || otpForm).classList.remove("hide"); if (otpForm) otpForm.classList.add("hide"); authMsg(""); };
   const sendLink = async (to, btn) => {
     busy(btn, true, "Sending…");
-    const { error } = await sb.auth.signInWithOtp({ email: to, options: { shouldCreateUser: false, emailRedirectTo: location.origin + "/auth-callback.html" } });
+    const { error } = await sb.auth.signInWithOtp({ email: to, options: { shouldCreateUser: false, emailRedirectTo: location.origin + "/auth-callback.html", captchaToken: await captcha() } });
     busy(btn, false);
-    if (error) return authMsg(esc(friendly(error)));
+    if (error && !NO_ACCOUNT.test(error.message)) return authMsg(esc(friendly(error)));
     authMsg(""); showCode(to, "email");
   };
 
@@ -194,18 +218,16 @@ function authPage(mode) {
     if (!ok) { if (!weak) authMsg(""); return; }
     const btn = $("button[type=submit]", pwForm); busy(btn, true, mode === "signup" ? "Creating your account…" : "Logging in…");
     if (mode === "signup") {
-      const { data, error } = await sb.auth.signUp({ email: to, password: pw, options: { emailRedirectTo: location.origin + "/auth-callback.html", data: { full_name: nameIn.value.trim().slice(0, 80) } } });
+      const { data, error } = await sb.auth.signUp({ email: to, password: pw, options: { captchaToken: await captcha(), emailRedirectTo: location.origin + "/auth-callback.html", data: { full_name: nameIn.value.trim().slice(0, 80) } } });
       busy(btn, false);
       if (error) return authMsg(esc(friendly(error)));
-      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0)
-        return authMsg(`An account with this email already exists. <a class="link" href="login.html">Log in</a> or <a class="link" href="forgot-password.html">reset your password</a>.`);
       if (data.session) return afterSignIn();
       authMsg(""); return showCode(to, "email");
     }
-    const { error } = await sb.auth.signInWithPassword({ email: to, password: pw });
+    const { error } = await sb.auth.signInWithPassword({ email: to, password: pw, options: { captchaToken: await captcha() } });
     if (error) {
       busy(btn, false);
-      if (/not confirmed/i.test(error.message)) { await sb.auth.resend({ type: "signup", email: to, options: { emailRedirectTo: location.origin + "/auth-callback.html" } }); authMsg("Please confirm your email first — we've sent the confirmation again.", "amber"); return showCode(to, "email"); }
+      if (/not confirmed/i.test(error.message)) { await sb.auth.resend({ type: "signup", email: to, options: { captchaToken: await captcha(), emailRedirectTo: location.origin + "/auth-callback.html" } }); authMsg("Please confirm your email first — we've sent the confirmation again.", "amber"); return showCode(to, "email"); }
       return authMsg(esc(friendly(error)) + (/wrong email or password/i.test(friendly(error)) ? ` <a class="link" href="forgot-password.html">Reset your password</a>` : ""));
     }
     location.replace("auth-callback.html");
@@ -232,9 +254,10 @@ function authPage(mode) {
   $("#a-resend").addEventListener("click", async () => {
     const b = $("#a-resend"); busy(b, true, "Sending…");
     const { error } = mode === "signup"
-      ? await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: location.origin + "/auth-callback.html" } })
-      : await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + "/auth-callback.html" } });
-    busy(b, false); toast(error ? friendly(error) : "Sent again — check your inbox"); if (!error) cooldown(b);
+      ? await sb.auth.resend({ type: "signup", email, options: { captchaToken: await captcha(), emailRedirectTo: location.origin + "/auth-callback.html" } })
+      : await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + "/auth-callback.html", captchaToken: await captcha() } });
+    const shown = error && !NO_ACCOUNT.test(error.message) ? error : null;
+    busy(b, false); toast(shown ? friendly(shown) : "Sent again — check your inbox"); if (!shown) cooldown(b);
   });
   $("#a-code").addEventListener("input", e => { const d = e.target.value.replace(/\D/g, ""); if (d.length === 8) codeForm.requestSubmit(); });
   $("#a-back").addEventListener("click", back);
@@ -274,8 +297,8 @@ H["forgot-password.html"] = async () => {
   const send = async btn => {
     busy(btn, true, "Sending…");
     const { error } = via === "email"
-      ? await sb.auth.resetPasswordForEmail(target, { redirectTo: location.origin + "/reset-password.html" })
-      : await sb.auth.signInWithOtp({ phone: target, options: { shouldCreateUser: false } });
+      ? await sb.auth.resetPasswordForEmail(target, { redirectTo: location.origin + "/reset-password.html", captchaToken: await captcha() })
+      : await sb.auth.signInWithOtp({ phone: target, options: { shouldCreateUser: false, captchaToken: await captcha() } });
     busy(btn, false);
     // Don't reveal whether an account exists; only surface rate limits.
     if (error && /rate limit|too many|seconds/i.test(error.message)) { authMsg(esc(friendly(error))); return false; }
@@ -344,9 +367,9 @@ H["reset-password.html"] = async () => {
 H["auth-callback.html"] = async () => {
   const p = params(), hp = new URLSearchParams(location.hash.slice(1));
   const err = p.get("error_description") || hp.get("error_description");
-  if (err) return go("login.html?error=" + encodeURIComponent(err));
+  if (err) return go("login.html?error=" + (/expired|invalid/i.test(err) ? "link" : "failed"));
   const { data: { session }, error } = await sb.auth.getSession();
-  if (error || !session) return go("login.html?error=" + encodeURIComponent(error ? friendly(error) : "That sign-in link has expired or was opened in a different browser. Request a new one, and open it in the same browser you requested it from."));
+  if (error || !session) return go("login.html?error=" + (error ? "failed" : "link"));
   return afterSignIn();
 };
 
@@ -726,7 +749,7 @@ H["settings.html"] = async () => {
   <div id="s-not" class="${tab === "s-not" ? "" : "hide"} card card-lg" style="max-width:640px"><div class="list">${tog("notify_reminders", "Tournament reminders", "Before tournaments you've registered for.")}${tog("notify_weekly", "Weekly rank report", "Every Monday.")}</div><p class="t-xs muted mt2">Saved now; reminder emails switch on after the pilot.</p></div>
   <div id="s-data" class="${tab === "s-data" ? "" : "hide"} card card-lg stack" style="max-width:640px"><p class="t-sm">Download everything we hold about you, or delete your account. Deletion is immediate and permanent.</p>
     <div class="row"><button class="btn" id="export">Export my data</button><button class="btn" style="border-color:var(--red);color:var(--red)" data-modal="del-modal">Delete account</button></div></div>
-  ${modal("del-modal", "Delete your account?", `<p class="muted">Your profile, ranks, tournament history and applications are deleted right away. This can't be undone.</p><div class="field"><label for="del-confirm">Type DELETE to confirm</label><input class="input" id="del-confirm" autocomplete="off"></div><div class="row"><button class="btn" data-close-modal>Cancel</button><button class="btn btn-dark" id="del-go">Delete forever</button></div>`)}`);
+  ${modal("del-modal", "Delete your account?", `<p class="muted">Your profile, ranks, tournament history and applications are deleted right away. This can't be undone. If you last logged in more than 10 minutes ago, we'll ask you to log in again first.</p><div class="field"><label for="del-confirm">Type DELETE to confirm</label><input class="input" id="del-confirm" autocomplete="off"></div><div class="row"><button class="btn" data-close-modal>Cancel</button><button class="btn btn-dark" id="del-go">Delete forever</button></div>`)}`);
   const upd = async (patch, msg = "Saved") => { try { const row = await q(sb.from("profiles").update(patch).eq("id", ME.user.id).select().single()); ME.profile = row; fillShell(); toast(msg); } catch (e) { toast(friendly(e)); } };
   $$("#vis .option").forEach(o => o.addEventListener("click", () => upd({ visibility: o.dataset.vis }, o.dataset.vis === "public" ? "Visible to everyone — your name now shows on leaderboards" : "Visibility updated")));
   $$("[data-pref]").forEach(t => t.addEventListener("click", async () => { const want = t.getAttribute("aria-checked") === "true"; await upd({ [t.dataset.pref]: want }); if (!!ME.profile[t.dataset.pref] !== want) t.setAttribute("aria-checked", String(!want)); }));
@@ -740,7 +763,19 @@ H["settings.html"] = async () => {
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rank-culture-data.json"; a.click(); URL.revokeObjectURL(a.href);
     } catch (e) { toast(friendly(e)); }
   });
-  $("#del-go").addEventListener("click", async () => { const b = $("#del-go"); if ($("#del-confirm").value.trim() !== "DELETE") return toast("Type DELETE to confirm"); busy(b, true, "Deleting…"); try { await q(sb.rpc("delete_my_account")); try { Object.keys(sessionStorage).filter(k => k.startsWith("rc-")).forEach(k => sessionStorage.removeItem(k)); localStorage.removeItem("rc-next"); } catch (e) {} await sb.auth.signOut({ scope: "local" }); location.replace("index.html?deleted=1"); } catch (e) { busy(b, false); toast(friendly(e)); } });
+  $("#del-go").addEventListener("click", async () => {
+    const b = $("#del-go"); if ($("#del-confirm").value.trim() !== "DELETE") return toast("Type DELETE to confirm");
+    busy(b, true, "Deleting…");
+    try { await q(sb.rpc("delete_my_account")); }
+    catch (e) {
+      busy(b, false); toast(friendly(e));
+      // Deletion needs a login in the last 10 minutes: sign in again and come straight back here.
+      if (/reauth required/i.test(e.message || "")) { await sb.auth.signOut({ scope: "local" }); return go("login.html?next=" + encodeURIComponent("settings.html?tab=s-data")); }
+      return;
+    }
+    try { Object.keys(sessionStorage).filter(k => k.startsWith("rc-")).forEach(k => sessionStorage.removeItem(k)); localStorage.removeItem("rc-next"); } catch (e) {}
+    await sb.auth.signOut({ scope: "local" }); location.replace("index.html?deleted=1");
+  });
   $("#pw-change").addEventListener("submit", async e => {
     e.preventDefault();
     const pw = $("#pw-new").value, weak = pwProblem(pw, ME.user.email), nonce = $("#pw-nonce").value.replace(/\D/g, "");

@@ -5,4 +5,7 @@ module.exports = {
   url: "https://vxzbiytdjcyaqupgxjzx.supabase.co",
   key: "sb_publishable_JKmm-b6Iz0bvOpxP23wVOg_POF2ECrn",
   storageKey: "sb-vxzbiytdjcyaqupgxjzx-auth-token",
+  // Cloudflare Turnstile site key (public). Empty = no CAPTCHA. Set it, deploy, then switch on
+  // Supabase → Auth → Attack Protection → CAPTCHA with the matching secret key.
+  turnstileSiteKey: "",
 };

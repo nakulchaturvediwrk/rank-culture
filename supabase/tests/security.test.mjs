@@ -135,6 +135,13 @@ await throws("tick is server-only", A, `select public.tick_all()`);
 await throws("battle internals are server-only", A, `select public._battle_start($1, true)`, [room]);
 
 console.log("9. Account deletion");
+await throws("deletion needs a recent login (stolen old session)", { ...A, loginAgo: 3600 }, `select public.delete_my_account()`, [], /reauth required/);
+await throws("deletion needs a login time at all", { ...A, loginAgo: 1e9 }, `select public.delete_my_account()`, [], /reauth required/);
+ok("account still there after refused deletion", (await su(`select count(*)::int n from auth.users where id=$1`, [A.id])).rows[0].n === 1);
+for (const f of ["_recent_login(10)", "_path_rules(1)", "_check_batch('{}')", "_batch_ok(gen_random_uuid(), 'x')"]) {
+  await throws(`signed-in user cannot call ${f}`, A, `select public.${f}`, [], /permission denied/);
+  await throws(`anon cannot call ${f}`, null, `select public.${f}`, [], /permission denied/);
+}
 await as(db, A, `select public.delete_my_account()`);
 const left = (await su(`select (select count(*) from public.profiles where id=$1) + (select count(*) from public.entries where user_id=$1)
   + (select count(*) from public.applications where user_id=$1) + (select count(*) from public.contact_messages where user_id=$1)

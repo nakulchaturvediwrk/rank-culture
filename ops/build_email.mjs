@@ -46,7 +46,7 @@ const html = `<!doctype html><html><body style="margin:0;background:#FAFAF8">
   <p style="font:15px/1.5 Arial;color:#333;margin:0 0 14px">${esc(b.summary || "")}</p>
   <p style="font:15px/1.5 Arial;color:#333;margin:0 0 6px"><strong>It goes live on Monday at 10:00 AM IST</strong> unless you hold it. Approve to publish now, or hold to stop it.</p>
   ${btn(url + "&do=approve", "Review &amp; approve", "#2D50CD")}${btn(url + "&do=hold", "Review &amp; hold", "#0B0B0C")}
-  <p style="font:12px Arial;color:#777;margin:6px 0 0">Both buttons open the review page first — nothing changes until you click there. The link expires in 21 days.</p>
+  <p style="font:12px Arial;color:#777;margin:6px 0 0">Both buttons open the review page first — nothing changes until you click there. The link expires in 7 days.</p>
 </td></tr>
 ${b.feedback_notes ? section("What students said — and what changed", `<p style="font:14px/1.55 Arial;color:#333;white-space:pre-line;margin:0">${esc(b.feedback_notes)}</p>`) : ""}
 ${section("How it works", `<ol style="font:14px/1.6 Arial;color:#333;margin:0;padding-left:20px">

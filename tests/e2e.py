@@ -72,6 +72,8 @@ class Mock:
         self.fail_profile_patch = kw.get("fail_profile_patch", False)
         self.signup_mode = kw.get("signup_mode", "session")
         self.reauth = kw.get("reauth", False)
+        self.otp_no_account = kw.get("otp_no_account", False)
+        self.delete_reauth = kw.get("delete_reauth", False)
         self.phone = kw.get("phone", False)
         self.started = False
         self.submitted = False
@@ -193,6 +195,7 @@ class Mock:
                 self.signed_in = True; return send(200, SESSION)
             if path == "/auth/v1/settings": return send(200, {"external": {"email": True, "phone": self.phone, "github": True}})
             if path == "/auth/v1/verify": self.signed_in = True; return send(200, SESSION)
+            if path == "/auth/v1/otp" and self.otp_no_account: return err(422, "otp_disabled", "Signups not allowed for otp")
             if path in ("/auth/v1/otp", "/auth/v1/recover", "/auth/v1/resend"): return send(200, {})
             if not self.signed_in: return send(401, {"msg": "no session"})
             if path == "/auth/v1/user" and req.method == "PUT":
@@ -204,6 +207,7 @@ class Mock:
         single = "vnd.pgrst.object" in (req.headers.get("accept") or "")
         if path.startswith("/rest/v1/rpc/"):
             fn = path.rsplit("/", 1)[1]
+            if fn == "delete_my_account" and self.delete_reauth: return send(400, {"code": "P0001", "message": "reauth required: please log in again to delete your account"})
             try: return send(200, self.rpc(fn, body or {}))
             except KeyError: return send(404, {"message": f"unmocked rpc {fn}"})
         if path.startswith("/rest/v1/"):
@@ -368,8 +372,25 @@ def run():
         def signup_exists(page, m):
             page.goto(f"{BASE}/signup.html"); page.wait_for_load_state("networkidle")
             page.fill("#a-name", "Asha Rao"); page.fill("#a-email", "asha@example.in"); page.fill("#a-pass", "Right-pass1"); page.check("#a-terms")
-            page.click("#pw-form button[type=submit]"); page.wait_for_selector("text=already exists")
-        flow("sign up with an email that's taken", signup_exists, signed_in=False, signup_mode="exists")
+            page.click("#pw-form button[type=submit]"); page.wait_for_selector("#code-form:not(.hide)")
+            assert "already exists" not in page.text_content("body").lower(), "signup reveals that the email has an account"
+        flow("sign up with a taken email looks the same as a new one (no enumeration)", signup_exists, signed_in=False, signup_mode="exists")
+
+        def login_code_unknown(page, m):
+            page.goto(f"{BASE}/login.html"); page.wait_for_load_state("networkidle")
+            page.click("#a-link-mode"); page.fill("#a-email2", "nobody@example.in"); page.click("#otp-form button[type=submit]")
+            page.wait_for_selector("#code-form:not(.hide)")
+            assert "no account" not in page.text_content("body").lower(), "code login reveals that the email has no account"
+        flow("code login for an unknown email looks the same (no enumeration)", login_code_unknown, signed_in=False, otp_no_account=True)
+
+        def login_error_param(page, m):
+            page.goto(f"{BASE}/login.html?error=" + "Your%20account%20is%20locked.%20Call%20%2B91%2099999%2000000%3Cb%3Enow%3C%2Fb%3E"); page.wait_for_load_state("networkidle")
+            msg = page.text_content("#auth-msg") or ""
+            assert "locked" not in msg and "99999" not in msg, f"login page shows text from the URL: {msg}"
+            assert "didn't complete" in msg, msg
+            page.goto(f"{BASE}/login.html?error=link"); page.wait_for_load_state("networkidle")
+            assert "expired" in (page.text_content("#auth-msg") or ""), "known error code not shown"
+        flow("login page never shows text from the link (?error=)", login_error_param, signed_in=False)
 
         def login_pw(page, m):
             page.goto(f"{BASE}/login.html?next=jobs.html"); page.wait_for_load_state("networkidle")
@@ -507,6 +528,13 @@ def run():
             page.fill("#del-confirm", "DELETE"); page.click("#del-go"); page.wait_for_url("**/index.html?deleted=1")
             page.wait_for_timeout(600); assert "deleted" in toast(page).lower(), toast(page)
         flow("delete account", delete_acct)
+
+        def delete_reauth(page, m):
+            page.goto(f"{BASE}/settings.html?tab=s-data"); page.wait_for_load_state("networkidle")
+            page.click("[data-modal=del-modal]"); page.fill("#del-confirm", "DELETE"); page.click("#del-go")
+            page.wait_for_url("**/login.html?next=*")
+            assert "settings.html%3Ftab%3Ds-data" in page.url, page.url
+        flow("delete with an old login asks to log in again", delete_reauth, delete_reauth=True)
 
         def drills(page, m):
             page.goto(f"{BASE}/drills.html"); page.wait_for_selector("text=SEO is costing you the most points")

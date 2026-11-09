@@ -2,7 +2,7 @@
   "name": "rank-culture",
   "version": "0.2.0",
   "private": true,
-  "description": "Rank Culture \u2014 merit-first hiring through skill tournaments.",
+  "description": "Rank Culture — merit-first hiring through skill tournaments.",
   "author": "Nakul Chaturvedi",
   "license": "UNLICENSED",
   "homepage": "https://rankculture.in",
@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0"
   }
 }

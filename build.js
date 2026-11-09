@@ -27,7 +27,7 @@ for (const [file, html] of Object.entries(pages)) {
   const headPart = html.slice(0, html.indexOf("<body>")).replace('<script src="assets/shell.js"></script>', "");
   fs.writeFileSync(path.join(OUT, file), minify(headPart) + `<body><script src="assets/site.js"></script><script>RCBODY(${JSON.stringify(file)})</script><noscript>Please enable JavaScript to view the Rank Culture prototype.</noscript></body></html>`);
 }
-require("child_process").execSync(`npx --yes esbuild@0.24.0 src/browser.js --bundle --minify --format=iife --outfile=${path.join(OUT, "assets/site.js")}`, { stdio: "inherit" });
+require("child_process").execSync(`${fs.existsSync(path.join(__dirname, "node_modules/.bin/esbuild")) ? path.join(__dirname, "node_modules/.bin/esbuild") : "npx --yes esbuild@0.24.0"} src/browser.js --bundle --minify --format=iife --outfile=${path.join(OUT, "assets/site.js")}`, { stdio: "inherit" });
 { const f = path.join(OUT, "assets/site.js"); fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(/\n\s*/g, " ").replace(/> </g, "><")); }
 for (const f of fs.readdirSync(path.join(__dirname, "assets"))) for (const d of [OUT, STATIC]) fs.copyFileSync(path.join(__dirname, "assets", f), path.join(d, "assets", f));
 
@@ -70,7 +70,7 @@ const hashes = [...inline].map(src => `'sha256-${require("crypto").createHash("s
 // Vercel reads headers from the root vercel.json before the build runs, so the hashes live there.
 // Locally this keeps it in sync; on Vercel (VERCEL=1) a stale CSP fails the build instead of shipping broken pages.
 { const vf = path.join(__dirname, "vercel.json"), raw = fs.readFileSync(vf, "utf8"), v = JSON.parse(raw);
-  const want = `script-src 'self' ${hashes.join(" ")};`;
+  const want = `script-src 'self' https://challenges.cloudflare.com ${hashes.join(" ")};`;
   for (const h of v.headers) for (const x of h.headers) if (x.key === "Content-Security-Policy") {
     if (!/script-src [^;]*;/.test(x.value)) problems.push("vercel.json: CSP has no script-src");
     x.value = x.value.replace(/script-src [^;]*;/, want);

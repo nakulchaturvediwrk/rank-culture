@@ -36,9 +36,10 @@ export async function makeDb(migDir, { upTo = 99 } = {}) {
   return db;
 }
 
-// Run fn's SQL as a role. user = { id, aal } or null for anon.
+// Run fn's SQL as a role. user = { id, aal, loginAgo (seconds since sign-in, default 60) } or null for anon.
 export async function as(db, user, sql, params = []) {
-  const claims = user ? JSON.stringify({ sub: user.id, role: "authenticated", aal: user.aal || "aal1" }) : JSON.stringify({ role: "anon" });
+  const amr = user ? [{ method: "password", timestamp: Math.floor(Date.now() / 1000) - (user.loginAgo ?? 60) }] : null;
+  const claims = user ? JSON.stringify({ sub: user.id, role: "authenticated", aal: user.aal || "aal1", amr }) : JSON.stringify({ role: "anon" });
   await db.exec(`reset role; select set_config('request.jwt.claims', '${claims.replace(/'/g, "''")}', false); set role ${user ? "authenticated" : "anon"};`);
   try { return await db.query(sql, params); }
   finally { await db.exec("reset role;"); }

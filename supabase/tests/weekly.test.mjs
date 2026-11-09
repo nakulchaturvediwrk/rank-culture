@@ -138,5 +138,10 @@ ok("email goes to rank1@ from noreply@ with images", sent.to[0] === "rank1@rankc
 ok("email not sent twice", Number((await su(`select public.send_review_emails() n`)).rows[0].n) === 0);
 await throws("students can't trigger emails", A, `select public.send_review_emails()`);
 
+const old = (await su(`select * from public.stage_batch('2026-12-07', $1, 'old')`, [good])).rows[0];
+await su(`update public.content_batches set created_at = now() - interval '8 days' where id = $1`, [old.batch_id]);
+await throws("review link expires after 7 days", null, `select public.review_batch($1, $2)`, [old.batch_id, old.token], /invalid|expired/);
+await throws("expired link can't approve", null, `select public.decide_batch($1, $2, 'approve')`, [old.batch_id, old.token], /invalid|expired/);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
