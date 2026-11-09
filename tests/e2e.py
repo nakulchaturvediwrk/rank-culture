@@ -63,6 +63,8 @@ class Mock:
         self.apps = [{"id": "a1", "job_id": "kirana-growth", "status": "applied", "fast_track": True, "created_at": "2026-11-06T10:00:00Z", "jobs": {"role": "Growth Associate", "company": "Kirana Club"}},
                      {"id": "a2", "job_id": "saltpan-ba", "status": "applied", "fast_track": False, "created_at": "2026-11-05T10:00:00Z", "jobs": {"role": "Business Analyst", "company": "Saltpan Labs"}}]
         self.fail_profile_patch = kw.get("fail_profile_patch", False)
+        self.signup_mode = kw.get("signup_mode", "session")
+        self.reauth = kw.get("reauth", False)
         self.started = False
         self.submitted = False
 
@@ -152,11 +154,22 @@ class Mock:
             if single and isinstance(data, list): data = data[0] if data else None
             route.fulfill(status=status, headers={**cors, "content-type": "application/json"}, body=json.dumps(data))
         if path.startswith("/auth/v1/"):
-            if not self.signed_in and path != "/auth/v1/otp": return send(401, {"msg": "no session"})
+            err = lambda st, code, msg: send(st, {"code": code, "error_code": code, "msg": msg, "message": msg, "error_description": msg})
+            if path == "/auth/v1/token" and "grant_type=password" in q:
+                if (body or {}).get("password") != "Right-pass1": return err(400, "invalid_credentials", "Invalid login credentials")
+                self.signed_in = True; return send(200, SESSION)
+            if path == "/auth/v1/signup":
+                if self.signup_mode == "exists": return send(200, {**USER, "identities": []})
+                if self.signup_mode == "confirm": return send(200, {**USER, "identities": [{"provider": "email"}], "confirmation_sent_at": "2026-11-08T00:00:00Z"})
+                self.signed_in = True; return send(200, SESSION)
+            if path == "/auth/v1/verify": self.signed_in = True; return send(200, SESSION)
+            if path in ("/auth/v1/otp", "/auth/v1/recover", "/auth/v1/resend"): return send(200, {})
+            if not self.signed_in: return send(401, {"msg": "no session"})
+            if path == "/auth/v1/user" and req.method == "PUT":
+                if self.reauth and "nonce" not in (body or {}): return err(400, "reauthentication_needed", "Password update requires reauthentication")
+                return send(200, USER)
             if path == "/auth/v1/user": return send(200, USER)
             if path == "/auth/v1/token": return send(200, SESSION)
-            if path in ("/auth/v1/logout", "/auth/v1/otp"): return send(200, {})
-            if path == "/auth/v1/authorize": return send(200, {})
             return send(200, {})
         single = "vnd.pgrst.object" in (req.headers.get("accept") or "")
         if path.startswith("/rest/v1/rpc/"):
@@ -171,7 +184,7 @@ class Mock:
 
 # ---------- checks ----------
 PAGES_OUT = ["index.html", "how-it-works.html", "tournaments.html", "leaderboard.html", "employers.html", "pricing.html", "about.html", "contact.html",
-             "terms.html", "privacy.html", "login.html", "signup.html", "forgot-password.html", "recruiter.html", "host-tournament.html", "nope.html"]
+             "terms.html", "privacy.html", "login.html", "signup.html", "forgot-password.html", "reset-password.html", "recruiter.html", "host-tournament.html", "nope.html"]
 PAGES_IN = ["dashboard.html", "arena.html", "tournament.html?t=growth", "tournament.html?t=product", "results.html?t=growth", "drills.html", "jobs.html",
             "job.html?j=kirana-growth", "applications.html", "leaderboard-app.html", "profile.html", "settings.html", "battles.html",
             "battle.html?id=b0000000-0000-4000-8000-000000000001", "knockout.html?id=k0000000-0000-4000-8000-000000000001", "onboarding-1.html",
@@ -299,13 +312,82 @@ def run():
             page.click("[data-oauth]"); page.wait_for_timeout(300)
             assert "18+" in toast(page), f"toast was {toast(page)!r}"
             assert page.url.startswith(f"{BASE}/signup.html"), "navigated to OAuth without terms"
-            page.click("#otp-form button[type=submit]"); page.wait_for_timeout(200)
-            assert not any(c[1] == "/auth/v1/otp" for c in m.calls), "sent sign-up email without name/terms"
-            page.fill("#a-name", "Asha Rao"); page.fill("#a-email", "asha@example.in"); page.check("#a-terms")
+            page.click("#pw-form button[type=submit]"); page.wait_for_timeout(200)
+            assert not any(c[1] == "/auth/v1/signup" for c in m.calls), "signed up with an empty form"
+            page.fill("#a-name", "Asha Rao"); page.fill("#a-email", "asha@example.in"); page.fill("#a-pass", "password"); page.check("#a-terms")
+            page.click("#pw-form button[type=submit]"); page.wait_for_timeout(200)
+            assert "letter and one number" in page.inner_text("#auth-msg"), page.inner_text("#auth-msg")
+            assert not any(c[1] == "/auth/v1/signup" for c in m.calls), "weak password was sent"
+            page.click("[data-reveal='#a-pass']"); assert page.get_attribute("#a-pass", "type") == "text", "show-password toggle broken"
+            page.fill("#a-pass", "Right-pass1"); page.click("#pw-form button[type=submit]")
+            page.wait_for_url("**/dashboard.html")
+            su = [c for c in m.calls if c[1] == "/auth/v1/signup"][0][3]
+            assert su["email"] == "asha@example.in" and su["password"] == "Right-pass1" and su["data"]["full_name"] == "Asha Rao", su
+        flow("sign up with a password", signup_oauth, signed_in=False)
+
+        def signup_confirm(page, m):
+            page.goto(f"{BASE}/signup.html"); page.wait_for_load_state("networkidle")
+            page.fill("#a-name", "Asha Rao"); page.fill("#a-email", "asha@example.in"); page.fill("#a-pass", "Right-pass1"); page.check("#a-terms")
+            page.click("#pw-form button[type=submit]"); page.wait_for_selector("#code-form:not(.hide)")
+            page.click("#a-resend"); page.wait_for_timeout(300)
+            assert any(c[1] == "/auth/v1/resend" and c[3]["type"] == "signup" for c in m.calls), "resend not sent"
+            page.fill("#a-code", "123456"); page.click("#code-form button[type=submit]"); page.wait_for_url("**/dashboard.html")
+        flow("sign up when email confirmation is on", signup_confirm, signed_in=False, signup_mode="confirm")
+
+        def signup_exists(page, m):
+            page.goto(f"{BASE}/signup.html"); page.wait_for_load_state("networkidle")
+            page.fill("#a-name", "Asha Rao"); page.fill("#a-email", "asha@example.in"); page.fill("#a-pass", "Right-pass1"); page.check("#a-terms")
+            page.click("#pw-form button[type=submit]"); page.wait_for_selector("text=already exists")
+        flow("sign up with an email that's taken", signup_exists, signed_in=False, signup_mode="exists")
+
+        def login_pw(page, m):
+            page.goto(f"{BASE}/login.html?next=jobs.html"); page.wait_for_load_state("networkidle")
+            page.fill("#a-email", "asha@example.in"); page.fill("#a-pass", "wrong-pass1"); page.click("#pw-form button[type=submit]")
+            page.wait_for_selector("text=Wrong email or password")
+            assert page.locator("#auth-msg a[href='forgot-password.html']").count() == 1, "no reset link after a wrong password"
+            page.fill("#a-pass", "Right-pass1"); page.click("#pw-form button[type=submit]"); page.wait_for_url("**/jobs.html")
+        flow("log in with a password (wrong, then right → back to where you were going)", login_pw, signed_in=False)
+
+        def login_link(page, m):
+            page.goto(f"{BASE}/login.html"); page.wait_for_load_state("networkidle")
+            page.fill("#a-email", "asha@example.in"); page.click("#a-link-mode")
+            assert page.locator("#a-email2").input_value() == "asha@example.in"
             page.click("#otp-form button[type=submit]"); page.wait_for_selector("#code-form:not(.hide)")
             otp = [c for c in m.calls if c[1] == "/auth/v1/otp"][0][3]
-            assert otp["email"] == "asha@example.in" and otp["data"]["full_name"] == "Asha Rao" and otp["create_user"] is True, otp
-        flow("sign-up guards", signup_oauth, signed_in=False)
+            assert otp["email"] == "asha@example.in" and otp["create_user"] is False, otp
+            page.click("#a-back"); assert page.locator("#pw-form").is_visible()
+        flow("email-link fallback on log in", login_link, signed_in=False)
+
+        def forgot(page, m):
+            page.goto(f"{BASE}/forgot-password.html"); page.wait_for_load_state("networkidle")
+            page.fill("#a-email", "asha@example.in"); page.click("#reset-form button[type=submit]"); page.wait_for_selector("#reset-sent:not(.hide)")
+            rec = [c for c in m.calls if c[1] == "/auth/v1/recover"]
+            assert rec and rec[0][3]["email"] == "asha@example.in", rec
+            assert "redirect_to=http://localhost" in rec[0][2] and "reset-password.html" in rec[0][2], rec[0][2]
+        flow("forgot password sends a reset link", forgot, signed_in=False)
+
+        def reset_bad(page, m):
+            page.goto(f"{BASE}/reset-password.html"); page.wait_for_selector("text=Send a new link")
+        flow("reset page without a valid link", reset_bad, signed_in=False)
+
+        def reset_ok(page, m):
+            page.goto(f"{BASE}/reset-password.html"); page.wait_for_selector("#np-form:not(.hide)")
+            page.fill("#np-pass", "Newpass99"); page.fill("#np-pass2", "Newpass98"); page.click("#np-form button[type=submit]")
+            page.wait_for_selector("text=don't match")
+            page.fill("#np-pass2", "Newpass99"); page.click("#np-form button[type=submit]"); page.wait_for_url("**/dashboard.html")
+            assert any(c[0] == "PUT" and c[1] == "/auth/v1/user" and c[3]["password"] == "Newpass99" for c in m.calls)
+        flow("reset page sets a new password", reset_ok)
+
+        def change_pw(page, m):
+            page.goto(f"{BASE}/settings.html?tab=s-sec"); page.wait_for_selector("#pw-change")
+            page.fill("#pw-new", "Fresh-pass7"); page.fill("#pw-new2", "Fresh-pass7"); page.click("#pw-change button[type=submit]")
+            page.wait_for_selector("#pw-nonce-f:not(.hide)")
+            assert any(c[1] == "/auth/v1/reauthenticate" for c in m.calls), "no reauthentication code requested"
+            page.fill("#pw-nonce", "654321"); page.click("#pw-change button[type=submit]"); page.wait_for_timeout(500)
+            put = [c for c in m.calls if c[0] == "PUT" and c[1] == "/auth/v1/user"][-1][3]
+            assert put == {"password": "Fresh-pass7", "nonce": "654321"}, put
+            assert "saved" in toast(page).lower(), toast(page)
+        flow("change password in settings (with re-authentication)", change_pw, reauth=True)
 
         def protected_redirect(page, m):
             page.goto(f"{BASE}/settings.html?tab=s-sec"); page.wait_for_load_state("networkidle")

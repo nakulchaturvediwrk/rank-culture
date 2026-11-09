@@ -45,6 +45,12 @@ const here = () => (location.pathname.split("/").pop() || "index.html") + locati
 const friendly = e => {
   const m = (e && (e.message || e.error_description || e.msg)) || String(e);
   if (/rate limit|too many/i.test(m)) return "Too many attempts. Please wait a minute and try again.";
+  if (/invalid login credentials/i.test(m)) return "Wrong email or password.";
+  if (/user already registered/i.test(m)) return "An account with this email already exists. Log in instead.";
+  if (/same.*(old|current)|different from the old/i.test(m)) return "Choose a password you haven't used here before.";
+  if (/(pwned|leaked|known to be weak|easy to guess)/i.test(m)) return "That password has appeared in a data breach. Please choose another.";
+  if (/password should/i.test(m)) return m;
+  if (/email not confirmed/i.test(m)) return "Please confirm your email first.";
   if (/signups not allowed|user not found/i.test(m)) return "No account with that email yet — sign up first.";
   if (/expired|invalid.*(token|otp)/i.test(m)) return "That code is wrong or has expired. Request a new one.";
   if (/failed to fetch|network/i.test(m)) return "Can't reach the server. Check your connection.";
@@ -150,42 +156,125 @@ async function startOAuth(provider, btn) {
   const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: location.origin + "/auth-callback.html" } });
   if (error) { busy(btn, false); toast(/not enabled|unsupported provider/i.test(error.message) ? `${provider === "github" ? "GitHub" : "Google"} sign-in isn't switched on yet — use your email for now.` : friendly(error)); }
 }
+const pwProblem = (pw, email) => {
+  if (pw.length < 8) return "Use at least 8 characters.";
+  if (pw.length > 72) return "Use 72 characters or fewer.";
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return "Use at least one letter and one number.";
+  if (email && pw.toLowerCase() === email.toLowerCase()) return "Don't use your email as your password.";
+  return null;
+};
+const authMsg = (html, tone = "red") => { const m = $("#auth-msg"); if (m) m.innerHTML = html ? `<div class="banner ${tone}">${html}</div>` : ""; };
 function authPage(mode) {
   const next = safeNext(params().get("next"));
   try { if (next) localStorage.setItem("rc-next", next); else localStorage.removeItem("rc-next"); } catch (e) {}
-  const err = params().get("error"); if (err) $("#auth-msg").innerHTML = `<div class="banner red">${esc(err)}</div>`;
+  const err = params().get("error"); if (err) authMsg(esc(err));
   $$("[data-oauth]").forEach(b => b.addEventListener("click", () => startOAuth(b.dataset.oauth, b)));
-  const form = $("#otp-form"), codeForm = $("#code-form");
-  let email = "";
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
-    const emailIn = $("#a-email"), nameIn = $("#a-name"), terms = $("#a-terms");
-    email = emailIn.value.trim().toLowerCase();
-    let ok = /^\S+@\S+\.\S+$/.test(email); emailIn.classList.toggle("error", !ok);
-    if (nameIn) { const good = nameIn.value.trim().length >= 2; nameIn.classList.toggle("error", !good); ok = ok && good; }
-    if (terms && !terms.checked) { ok = false; toast("Please accept the Terms and Privacy policy"); }
-    if (!ok) return;
-    const btn = $("button[type=submit]", form); busy(btn, true, "Sending…");
-    const { error } = await sb.auth.signInWithOtp({ email, options: {
-      shouldCreateUser: mode === "signup", emailRedirectTo: location.origin + "/auth-callback.html",
-      data: mode === "signup" ? { full_name: nameIn.value.trim().slice(0, 80) } : undefined } });
+  const pwForm = $("#pw-form"), otpForm = $("#otp-form"), codeForm = $("#code-form");
+  let email = "", codeType = "email";
+  const showCode = (to, type) => { email = to; codeType = type; $("#sent-to").textContent = to; [pwForm, otpForm].forEach(f => f && f.classList.add("hide")); codeForm.classList.remove("hide"); $("#a-code").focus(); };
+  const back = () => { codeForm.classList.add("hide"); (pwForm || otpForm).classList.remove("hide"); if (otpForm) otpForm.classList.add("hide"); authMsg(""); };
+  const sendLink = async (to, btn) => {
+    busy(btn, true, "Sending…");
+    const { error } = await sb.auth.signInWithOtp({ email: to, options: { shouldCreateUser: false, emailRedirectTo: location.origin + "/auth-callback.html" } });
     busy(btn, false);
-    if (error) { $("#auth-msg").innerHTML = `<div class="banner red">${esc(friendly(error))}</div>`; return; }
-    $("#auth-msg").innerHTML = "";
-    $("#sent-to").textContent = email;
-    form.classList.add("hide"); codeForm.classList.remove("hide");
+    if (error) return authMsg(esc(friendly(error)));
+    authMsg(""); showCode(to, "email");
+  };
+
+  pwForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const emailIn = $("#a-email"), passIn = $("#a-pass"), nameIn = $("#a-name"), terms = $("#a-terms");
+    const to = emailIn.value.trim().toLowerCase(), pw = passIn.value;
+    let ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to); emailIn.classList.toggle("error", !ok);
+    if (nameIn) { const good = nameIn.value.trim().length >= 2; nameIn.classList.toggle("error", !good); ok = ok && good; }
+    const weak = mode === "signup" ? pwProblem(pw, to) : (pw ? null : "Enter your password.");
+    passIn.classList.toggle("error", !!weak); if (weak) { ok = false; authMsg(esc(weak)); }
+    if (terms && !terms.checked) { ok = false; toast("Please confirm you're 18+ and accept the Terms and Privacy policy"); }
+    if (!ok) { if (!weak) authMsg(""); return; }
+    const btn = $("button[type=submit]", pwForm); busy(btn, true, mode === "signup" ? "Creating your account…" : "Logging in…");
+    if (mode === "signup") {
+      const { data, error } = await sb.auth.signUp({ email: to, password: pw, options: { emailRedirectTo: location.origin + "/auth-callback.html", data: { full_name: nameIn.value.trim().slice(0, 80) } } });
+      busy(btn, false);
+      if (error) return authMsg(esc(friendly(error)));
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0)
+        return authMsg(`An account with this email already exists. <a class="link" href="login.html">Log in</a> or <a class="link" href="forgot-password.html">reset your password</a>.`);
+      if (data.session) return afterSignIn();
+      authMsg(""); return showCode(to, "email");
+    }
+    const { error } = await sb.auth.signInWithPassword({ email: to, password: pw });
+    if (error) {
+      busy(btn, false);
+      if (/not confirmed/i.test(error.message)) { await sb.auth.resend({ type: "signup", email: to, options: { emailRedirectTo: location.origin + "/auth-callback.html" } }); authMsg("Please confirm your email first — we've sent the confirmation again.", "amber"); return showCode(to, "email"); }
+      return authMsg(esc(friendly(error)) + (/wrong email or password/i.test(friendly(error)) ? ` <a class="link" href="forgot-password.html">Reset your password</a>` : ""));
+    }
+    location.replace("auth-callback.html");
   });
+
+  if (otpForm) {
+    $("#a-link-mode").addEventListener("click", () => { pwForm.classList.add("hide"); otpForm.classList.remove("hide"); const v = $("#a-email").value.trim(); if (v) $("#a-email2").value = v; $("#a-email2").focus(); authMsg(""); });
+    $("#a-pw-mode").addEventListener("click", () => { otpForm.classList.add("hide"); pwForm.classList.remove("hide"); authMsg(""); });
+    otpForm.addEventListener("submit", e => {
+      e.preventDefault(); const to = $("#a-email2").value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { $("#a-email2").classList.add("error"); return; }
+      sendLink(to, $("button[type=submit]", otpForm));
+    });
+  }
   codeForm.addEventListener("submit", async e => {
     e.preventDefault();
     const code = $("#a-code").value.replace(/\D/g, "");
     if (code.length < 6) { $("#a-code").classList.add("error"); return; }
     const btn = $("button[type=submit]", codeForm); busy(btn, true, "Checking…");
-    const { error } = await sb.auth.verifyOtp({ email, token: code, type: "email" });
-    if (error) { busy(btn, false); $("#auth-msg").innerHTML = `<div class="banner red">${esc(friendly(error))}</div>`; return; }
+    const { error } = await sb.auth.verifyOtp({ email, token: code, type: codeType });
+    if (error) { busy(btn, false); return authMsg(esc(friendly(error))); }
     location.replace("auth-callback.html");
   });
-  $("#a-resend").addEventListener("click", () => { codeForm.classList.add("hide"); form.classList.remove("hide"); });
+  $("#a-resend").addEventListener("click", async () => {
+    const b = $("#a-resend"); busy(b, true, "Sending…");
+    const { error } = mode === "signup"
+      ? await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: location.origin + "/auth-callback.html" } })
+      : await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + "/auth-callback.html" } });
+    busy(b, false); toast(error ? friendly(error) : "Sent again — check your inbox");
+  });
+  $("#a-back").addEventListener("click", back);
 }
+
+H["forgot-password.html"] = async () => {
+  const form = $("#reset-form");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const to = $("#a-email").value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { $("#a-email").classList.add("error"); return; }
+    const btn = $("button[type=submit]", form); busy(btn, true, "Sending…");
+    const { error } = await sb.auth.resetPasswordForEmail(to, { redirectTo: location.origin + "/reset-password.html" });
+    busy(btn, false);
+    if (error && /rate limit|too many/i.test(error.message)) return authMsg(esc(friendly(error)));
+    authMsg(""); $("#sent-to").textContent = to; form.classList.add("hide"); $("#reset-sent").classList.remove("hide");
+  });
+};
+
+H["reset-password.html"] = async () => {
+  const p = params(), hp = new URLSearchParams(location.hash.slice(1));
+  const linkErr = p.get("error_description") || hp.get("error_description");
+  const { data: { session } } = await sb.auth.getSession();
+  if (linkErr || !session) {
+    $("#np-for").textContent = "";
+    return authMsg(`${esc(linkErr || "This reset link has expired or was opened in a different browser.")} <a class="link" href="forgot-password.html">Send a new link</a>`);
+  }
+  const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") { try { localStorage.setItem("rc-next", "reset-password.html"); } catch (e) {} return go("mfa.html"); }
+  $("#np-for").textContent = `For ${session.user.email}`;
+  const form = $("#np-form"); form.classList.remove("hide"); $("#np-pass").focus();
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const pw = $("#np-pass").value, weak = pwProblem(pw, session.user.email);
+    if (weak) { $("#np-pass").classList.add("error"); return authMsg(esc(weak)); }
+    if (pw !== $("#np-pass2").value) { $("#np-pass2").classList.add("error"); return authMsg("The two passwords don't match."); }
+    const btn = $("button[type=submit]", form); busy(btn, true, "Saving…");
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) { busy(btn, false); return authMsg(esc(friendly(error))); }
+    toast("Password saved"); afterSignIn();
+  });
+};
 
 async function afterSignIn() {
   const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -300,7 +389,7 @@ H["dashboard.html"] = async () => {
     <div class="card card-lg dark stack"><div class="label" style="color:#9DB1FF">${weak ? "Where you lost most points" : "Next step"}</div><div class="t-h2">${esc(weak ? weak.label.replace(/^.*·\s*/, "") : "Play another round")}</div>
       <p class="muted t-sm">${weak ? `You scored ${weak.points}/${weak.max} here in ${esc(last.t.name)}.` : "Each tournament moves your rank toward your real level."}</p><a class="btn btn-primary btn-block" href="drills.html">Warm up with a drill</a></div></div>
     <div class="grid g2"><div class="card card-lg"><div class="card-head"><h2 class="t-h3">Last result</h2>${last ? `<a class="link" href="results.html?t=${esc(last.t.id)}">Details →</a>` : ""}</div>
-      ${last ? `<div class="stack">${last.task_scores.map(x => `<div><div class="row between t-sm"><span>${esc(x.label)}</span><span class="mono">${x.max ? `${x.points}/${x.max}` : "In review"}</span></div>${x.max ? bar(Math.round(x.points / x.max * 100), x.points / x.max > .85 ? "blue" : "") : ""}</div>`).join("")}</div>` : '<p class="t-sm muted">No tournaments in this field yet.</p>'}</div>
+      ${last ? `<div class="stack">${last.task_scores.map(x => `<div><div class="row between t-sm"><span>${esc(x.label)}</span><span class="mono">${x.max ? `${x.points}/${x.max}` : "Not scored"}</span></div>${x.max ? bar(Math.round(x.points / x.max * 100), x.points / x.max > .85 ? "blue" : "") : ""}</div>`).join("")}</div>` : '<p class="t-sm muted">No tournaments in this field yet.</p>'}</div>
     <div class="card card-lg"><div class="card-head"><h2 class="t-h3">Fast-track tracker</h2><a class="link" href="applications.html">All →</a></div>
       ${apps.length ? `<div class="list t-sm">${apps.map(a => `<div><span><strong>${esc(a.jobs.company)}</strong><br><span class="muted">${esc(a.jobs.role)}</span></span>${appBadge(a)}</div>`).join("")}</div>` : `<p class="t-sm muted">No applications yet. <a class="link" href="jobs.html">See jobs you qualify for →</a></p>`}</div></div></div>`;
   };
@@ -349,7 +438,7 @@ H["tournament.html"] = async () => {
   const [counts, qs, regRows, entRows] = await Promise.all([q(sb.rpc("tournament_counts")), q(sb.rpc("tournament_tasks", { p_tournament: id })),
     q(sb.from("registrations").select("*").eq("tournament_id", id)), q(sb.from("entries").select("id").eq("tournament_id", id))]);
   const players = Number((counts.find(c => c.tournament_id === id) || {}).players || 0), reg = regRows[0], entry = entRows[0];
-  const r = ME.ratings[t.cat], tasks = qs.length ? qs.map(x => [x.label, x.kind === "mcq" ? `${x.points} pts` : "Human-reviewed"]) : (t.tasks || "").split(" · ").map(x => [x, ""]);
+  const r = ME.ratings[t.cat], tasks = qs.length ? qs.map(x => [x.label, x.kind === "mcq" ? `${x.points} pts` : "Written · not scored"]) : (t.tasks || "").split(" · ").map(x => [x, ""]);
   let action;
   if (entry) action = `<a class="btn btn-primary btn-lg btn-block" href="results.html?t=${esc(id)}">See my result</a>`;
   else if (t.status === "live") action = `<button class="btn btn-primary btn-lg btn-block" data-modal="start-modal">${reg && reg.started_at ? "Resume attempt" : "Start now"}</button>`;
@@ -362,7 +451,7 @@ H["tournament.html"] = async () => {
       <div class="grid g4 mt2">${[["Opens", fmtDay(t.opens_at), ""], ["Duration", `${t.duration_min} min`, `${tasks.length} tasks`], ["Registered", n(players), `of ${n(t.cap)}`], ["Entry", "Free", "One attempt"]].map(([l, v, s]) => `<div><div class="label muted">${l}</div><div class="mono t-h3 mt1">${esc(v)}</div><div class="t-xs muted">${esc(s)}</div></div>`).join("")}</div></div>
     <div class="card card-lg"><h2 class="t-h3 mb2">The tasks</h2><div class="list">${tasks.map(([h, m], i) => `<div><span class="mono t-h2 blue" style="width:48px">${String(i + 1).padStart(2, "0")}</span><div style="flex:1" class="row between"><strong class="t-body">${esc(h)}</strong><span class="mono t-xs muted">${esc(m)}</span></div></div>`).join("")}</div>${qs.length ? "" : '<p class="t-xs muted mt2">Full task briefs unlock when the tournament opens.</p>'}</div>
     <div class="card card-lg"><h2 class="t-h3 mb2">Prizes</h2><div class="grid g3"><div class="card dark"><div class="label" style="color:#9DB1FF">Top finishers</div><p class="t-sm mt1">${esc(t.prize)}</p></div><div class="card blue"><div class="label">Above the bar</div><p class="t-sm mt1">Fast-track applications to partner jobs that hire from this tournament</p></div><div class="card"><div class="label">Everyone</div><p class="t-sm mt1 muted">Verified score, task breakdown, rank points</p></div></div></div>
-    <div class="card card-lg"><h2 class="t-h3 mb2">Rules</h2><ul class="stack t-sm" style="padding-left:20px"><li>One attempt. The timer runs on our server from the moment you start — closing the tab doesn't pause it.</li><li>Tab switches are recorded with your entry.</li><li>No AI tools unless a task says so.</li><li>Multiple-choice tasks score instantly; written answers are human-reviewed.</li></ul></div>
+    <div class="card card-lg"><h2 class="t-h3 mb2">Rules</h2><ul class="stack t-sm" style="padding-left:20px"><li>One attempt. The timer runs on our server from the moment you start — closing the tab doesn't pause it.</li><li>Tab switches are recorded with your entry.</li><li>No AI tools unless a task says so.</li><li>Multiple-choice tasks score instantly. Written answers are saved with your entry but don't count toward your score during the pilot.</li></ul></div>
   </div>
   <aside class="card card-lg stack rc-sticky"><div class="label muted">${t.status === "live" ? "Closes" : t.status === "upcoming" ? "Opens" : "Closed"}</div>
     <div class="t-h3">${fmt(t.status === "upcoming" ? t.opens_at : t.closes_at)}</div>
@@ -393,7 +482,7 @@ H["live.html"] = async () => {
     <div class="q-dots" aria-label="Tasks">${qs.map((x, i) => `<span role="button" tabindex="0" data-dot="${i}">${i + 1}</span>`).join("")}</div>
     <div class="row"><span class="badge red live">Timed</span><div class="timer" id="rc-timer" aria-live="off">--:--</div></div></div></div>`);
   render(`<h1 class="sr">${esc(t.name)} — live</h1><div data-rc-arena style="max-width:960px;margin:0 auto">${qs.map((x, i) => `<div class="q stack-lg${i ? " hide" : ""}" data-qi="${i}">
-    <div class="stack"><div class="row"><span class="badge">${esc(x.label)}</span><span class="mono t-xs muted">${x.kind === "mcq" ? `${x.points} pts` : "Human-reviewed"}</span></div><h2 class="t-h2">${esc(x.prompt)}</h2>${x.context ? `<p class="muted">${esc(x.context)}</p>` : ""}</div>
+    <div class="stack"><div class="row"><span class="badge">${esc(x.label)}</span><span class="mono t-xs muted">${x.kind === "mcq" ? `${x.points} pts` : "Written · not scored"}</span></div><h2 class="t-h2">${esc(x.prompt)}</h2>${x.context ? `<p class="muted">${esc(x.context)}</p>` : ""}</div>
     ${table(x.table_data)}
     ${x.kind === "mcq" ? `<div class="stack">${(x.options || []).map((o, k) => `<button class="option${ans[x.id] === k ? " selected" : ""}" aria-pressed="${ans[x.id] === k}" data-q="${x.id}" data-k="${k}"><span class="key">${"ABCDEF"[k]}</span>${esc(o)}</button>`).join("")}</div>`
       : `<textarea class="input" style="min-height:220px" maxlength="4000" data-q="${x.id}" placeholder="Type your answer…">${esc(ans[x.id] || "")}</textarea><div class="row between t-xs muted"><span>${ic("shield")} Saved on this device as you type</span><span>AI tools not allowed for this task</span></div>`}
@@ -438,14 +527,14 @@ H["results.html"] = async () => {
   const applied = new Set(apps.map(a => a.job_id)), claimable = jobs.filter(j => j.fast_track && score >= j.min_rank && !applied.has(j.id));
   const top = Math.max(1, Math.round(s.place / s.total * 100));
   render(`<div class="card dark card-lg mb3" style="box-shadow:8px 8px 0 var(--blue)"><div class="grid g2" style="align-items:center;gap:var(--s7)">
-    <div class="stack"><h1 class="label" style="color:#9DB1FF">${esc(t.name)} · ${e.written_pending ? "Provisional result" : "Result"}</h1>
+    <div class="stack"><h1 class="label" style="color:#9DB1FF">${esc(t.name)} · Result</h1>
       <div class="score"><span class="num">${score}</span><span class="of">/1000</span></div>
       <div class="row">${t.ranked ? `<span class="badge blue">${tierName(score)}${up ? " — rank up!" : ""}</span>` : '<span class="badge">Practice · rank unchanged</span>'}<span class="label" style="color:#9DB1FF">#${n(s.place)} of ${n(s.total)} · Top ${top}%</span></div>
-      <p class="muted">${t.ranked ? (before == null ? `This sets your starting ${esc(FIELDS[t.cat])} rank.` : `Your ${esc(FIELDS[t.cat])} rank moved from ${before} to ${e.rating_after}.`) : `You scored ${e.auto_points} of ${e.auto_max} points.`}${e.written_pending ? " Written answers are reviewed by humans and can add points within 48 hours." : ""}</p></div>
+      <p class="muted">${t.ranked ? (before == null ? `This sets your starting ${esc(FIELDS[t.cat])} rank.` : `Your ${esc(FIELDS[t.cat])} rank moved from ${before} to ${e.rating_after}.`) : `You scored ${e.auto_points} of ${e.auto_max} points.`}${e.written_pending ? " Your written answer is saved with your entry; it doesn't change your score during the pilot." : ""}</p></div>
     <div class="stack">${t.ranked ? `<div class="row between t-sm"><span>Previous</span><span class="mono">${before == null ? "—" : before}</span></div><div class="row between t-sm"><span>This tournament</span><span class="mono" style="color:#9DB1FF">${delta == null ? "New" : (delta >= 0 ? "+" : "") + delta}</span></div>` : ""}
       <div class="bar" style="border-color:#fff;background:transparent;height:16px"><i style="width:${Math.round(score / 10)}%;background:var(--blue)"></i></div>
       <div class="row between t-xs muted"><span>Challenger 650</span><span>Elite 800</span><span>Legend 900</span></div></div></div></div>
-  <div class="grid g3"><div class="card card-lg span2"><h2 class="t-h3 mb2">Task-by-task</h2><div class="list">${e.task_scores.map(x => `<div style="flex-direction:column;align-items:stretch;gap:var(--s2)"><div class="row between"><strong>${esc(x.label)}</strong><span class="mono">${x.max ? `${x.points}/${x.max}` : "In review"}</span></div>${x.max ? bar(Math.round(x.points / x.max * 100), x.points / x.max > .85 ? "blue" : "") : '<p class="t-sm muted">Human reviewers score this for clarity, reasoning and measurability.</p>'}</div>`).join("")}</div></div>
+  <div class="grid g3"><div class="card card-lg span2"><h2 class="t-h3 mb2">Task-by-task</h2><div class="list">${e.task_scores.map(x => `<div style="flex-direction:column;align-items:stretch;gap:var(--s2)"><div class="row between"><strong>${esc(x.label)}</strong><span class="mono">${x.max ? `${x.points}/${x.max}` : "Not scored"}</span></div>${x.max ? bar(Math.round(x.points / x.max * 100), x.points / x.max > .85 ? "blue" : "") : '<p class="t-sm muted">Saved with your entry. Written answers aren\'t scored during the pilot.</p>'}</div>`).join("")}</div></div>
   <div class="stack">${claimable.length ? `<div class="card card-lg stack"><h2 class="t-h3">Claim your fast-tracks</h2><p class="t-sm muted">Your score clears the bar for these roles. Pick any — they skip resume screening.</p><div class="stack" data-options="multi" id="claim">${claimable.map(j => `<button class="option" style="padding:var(--s3)" aria-pressed="false" data-job="${esc(j.id)}"><strong class="t-sm">${esc(j.company)}</strong><div class="t-xs muted">${esc(j.role)} · ${esc(j.salary)}</div></button>`).join("")}</div><button class="btn btn-primary btn-block" id="claim-btn">Claim fast-tracks</button></div>`
     : jobs.length ? `<div class="card card-lg stack"><h2 class="t-h3">Hiring from this tournament</h2><div class="list t-sm">${jobs.map(j => `<div><span>${esc(j.company)}<br><span class="t-xs muted">${esc(j.role)}</span></span><span class="mono t-xs">${applied.has(j.id) ? "Applied" : `needs ${j.min_rank}`}</span></div>`).join("")}</div></div>` : ""}
     <div class="card stack"><h2 class="t-h3">Close the gap</h2><p class="t-sm muted">Drills target the tasks where you dropped points.</p><a class="btn btn-block" href="drills.html">Do a drill</a></div>
@@ -561,6 +650,11 @@ H["settings.html"] = async () => {
     <div class="bt stack" style="padding-top:var(--s5)"><div class="label muted">Email</div><p class="t-sm"><strong>${esc(ME.user.email)}</strong> · signs in with ${[identities.includes("google") && "Google", identities.includes("github") && "GitHub", "email links"].filter(Boolean).join(", ")}</p>
       <div class="row"><input class="input" id="a-e" type="email" placeholder="New email" style="flex:1;min-width:200px"><button class="btn" type="button" id="a-e-btn">Change email</button></div><p class="t-xs muted">We'll send a confirmation link to both addresses. Nothing changes until you confirm.</p></div></form>
   <div id="s-sec" class="${tab === "s-sec" ? "" : "hide"} stack-lg" style="max-width:640px">
+    <form class="card card-lg stack" id="pw-change" novalidate><div><h2 class="t-h3">Password</h2><p class="t-sm muted">Set or change the password you log in with. At least 8 characters, with a letter and a number.</p></div>
+      <div class="field"><label for="pw-new">New password</label><input class="input" id="pw-new" type="password" autocomplete="new-password" minlength="8" maxlength="72"></div>
+      <div class="field"><label for="pw-new2">Type it again</label><input class="input" id="pw-new2" type="password" autocomplete="new-password" maxlength="72"></div>
+      <div class="field hide" id="pw-nonce-f"><label for="pw-nonce">Code we just emailed you</label><input class="input mono" id="pw-nonce" inputmode="numeric" autocomplete="one-time-code" maxlength="10"><span class="hint t-xs muted">For your security we confirm it's you before changing a password.</span></div>
+      <div class="row"><button class="btn btn-primary" type="submit">Save password</button></div></form>
     <div class="card card-lg stack"><div class="row between"><div><h2 class="t-h3">Two-step verification</h2><p class="t-sm muted">Ask for a code from an authenticator app (Google Authenticator, Authy, 1Password) every time you sign in.</p></div>${totp ? '<span class="badge green">On</span>' : '<span class="badge">Off</span>'}</div>
       <div id="mfa-box">${totp ? `<button class="btn" id="mfa-off" style="border-color:var(--red);color:var(--red)">Turn off two-step verification</button>` : `<button class="btn btn-primary" id="mfa-on">${ic("lock")} Set up two-step verification</button>`}</div></div>
     <div class="card card-lg stack"><h2 class="t-h3">Sessions</h2><p class="t-sm muted">Lost a phone or used a shared computer? Sign out everywhere, including this device.</p><button class="btn" id="sign-out-all">Sign out of all devices</button></div></div>
@@ -582,6 +676,23 @@ H["settings.html"] = async () => {
     } catch (e) { toast(friendly(e)); }
   });
   $("#del-go").addEventListener("click", async () => { const b = $("#del-go"); if ($("#del-confirm").value.trim() !== "DELETE") return toast("Type DELETE to confirm"); busy(b, true, "Deleting…"); try { await q(sb.rpc("delete_my_account")); try { Object.keys(sessionStorage).filter(k => k.startsWith("rc-")).forEach(k => sessionStorage.removeItem(k)); localStorage.removeItem("rc-next"); } catch (e) {} await sb.auth.signOut({ scope: "local" }); location.replace("index.html?deleted=1"); } catch (e) { busy(b, false); toast(friendly(e)); } });
+  $("#pw-change").addEventListener("submit", async e => {
+    e.preventDefault();
+    const pw = $("#pw-new").value, weak = pwProblem(pw, ME.user.email), nonce = $("#pw-nonce").value.replace(/\D/g, "");
+    if (weak) { $("#pw-new").classList.add("error"); return toast(weak); }
+    if (pw !== $("#pw-new2").value) { $("#pw-new2").classList.add("error"); return toast("The two passwords don't match"); }
+    const btn = $("#pw-change button[type=submit]"); busy(btn, true, "Saving…");
+    const { error } = await sb.auth.updateUser(nonce ? { password: pw, nonce } : { password: pw });
+    if (error && /reauth|nonce/i.test(error.message) && !nonce) {
+      const r = await sb.auth.reauthenticate(); busy(btn, false);
+      if (r.error) return toast(friendly(r.error));
+      $("#pw-nonce-f").classList.remove("hide"); $("#pw-nonce").focus(); return toast("We emailed you a code — enter it and press Save again");
+    }
+    busy(btn, false);
+    if (error) return toast(friendly(error));
+    $("#pw-new").value = $("#pw-new2").value = $("#pw-nonce").value = ""; $("#pw-nonce-f").classList.add("hide");
+    toast("Password saved");
+  });
   const on = $("#mfa-on"), off = $("#mfa-off");
   if (on) on.addEventListener("click", async () => {
     busy(on, true);
