@@ -13,9 +13,10 @@ insert into public.tournaments (id, name, cat, blurb, tasks, prize, opens_at, cl
  ('hr-dec', 'People Ops Cup', 'hr', 'Keep offers from ghosting, do the attrition maths, run fair interviews.', 'Stop offer drop-offs · Attrition maths · Fair interviews', 'Top finishers: fast-track to pilot partner people-ops roles', '2026-12-17 10:00+05:30', '2026-12-30 23:59+05:30', 40, 5000, true, 18)
 on conflict (id) do nothing;
 
-drop table if exists seed_dec;
-create temporary table seed_dec (t text, pos int, kind text, label text, prompt text, context text, tbl jsonb, opts jsonb, pts int, correct int);
-insert into seed_dec values
+create schema if not exists _seed;
+drop table if exists _seed.dec;
+create table _seed.dec (t text, pos int, kind text, label text, prompt text, context text, tbl jsonb, opts jsonb, pts int, correct int);
+insert into _seed.dec values
  ('growth-dec',1,'mcq','Task 1 · Win-back message','Which WhatsApp message should go to 40,000 customers who haven''t ordered in 6 months?','A skincare brand''s year-end sale: 25% off for 5 days. These customers opted in to WhatsApp updates.',null,'["MEGA SALE!!! 25% OFF EVERYTHING. SHOP NOW!!!","Hi Priya, your Vitamin C serum ran out a while ago — it''s 25% off till Sunday. Reorder in one tap: [link]","Dear customer, we hope you are well. Please visit our website.","New year, new you! Check out our latest launches."]',300,1),
  ('growth-dec',2,'mcq','Task 2 · Budget','Average order is ₹900 and gross margin is 40% (₹360 per order). Which channel should you cut first?',null,'{"head":["Channel","Spend","Orders","Cost per order"],"rows":[["Meta ads","₹3,00,000","1,500","₹200"],["Google Search","₹2,00,000","1,250","₹160"],["Influencers","₹2,50,000","250","₹1,000"],["Email","₹20,000","400","₹50"]]}','["Email — it brings the fewest orders","Influencers — every order costs more than it earns","Meta — it has the biggest budget","Google Search — it''s the smallest paid channel"]',400,1),
  ('growth-dec',3,'mcq','Task 3 · A/B test','Version B of the sale page converts at 3.1% vs 3.0% for A, after 2,000 visitors each. What do you do?',null,null,'["Ship B — it won","Ship A — it''s the original","Stop testing; the difference doesn''t matter","Keep the test running until it reaches the sample size you planned — 0.1 points on 2,000 visitors is noise"]',300,3),
@@ -57,12 +58,12 @@ insert into seed_dec values
  ('hr-dec',4,'text','Task 3b · Written answer','Draft the first-week onboarding plan for a new sales hire in 5 bullet points.',null,null,null,0,null);
 
 insert into public.questions (tournament_id, position, kind, label, prompt, context, table_data, options, points)
-select s.t, s.pos, s.kind, s.label, s.prompt, s.context, s.tbl, s.opts, s.pts from seed_dec s
+select s.t, s.pos, s.kind, s.label, s.prompt, s.context, s.tbl, s.opts, s.pts from _seed.dec s
 where not exists (select 1 from public.questions q where q.tournament_id = s.t and q.position = s.pos)
 order by s.t, s.pos;
 
 insert into public.answer_keys (question_id, correct)
-select q.id, s.correct from seed_dec s join public.questions q on q.tournament_id = s.t and q.position = s.pos
+select q.id, s.correct from _seed.dec s join public.questions q on q.tournament_id = s.t and q.position = s.pos
 where s.kind = 'mcq'
 on conflict (question_id) do nothing;
 
@@ -77,4 +78,4 @@ update public.questions q set skill = m.skill from (values
  ('code-dec',1,'JavaScript'),('code-dec',2,'Databases'),('code-dec',3,'Security'),
  ('hr-dec',1,'Hiring'),('hr-dec',2,'HR analytics'),('hr-dec',3,'Hiring')
 ) as m(t, pos, skill) where q.tournament_id = m.t and q.position = m.pos and q.skill is null;
-drop table if exists seed_dec;
+drop schema if exists _seed cascade;
