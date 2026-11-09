@@ -6,3 +6,4 @@ deploy/
 .DS_Store
 node_modules
 supabase/tests/package-lock.json
+__pycache__/

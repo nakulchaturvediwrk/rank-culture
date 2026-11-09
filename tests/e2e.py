@@ -65,6 +65,7 @@ class Mock:
         self.fail_profile_patch = kw.get("fail_profile_patch", False)
         self.signup_mode = kw.get("signup_mode", "session")
         self.reauth = kw.get("reauth", False)
+        self.phone = kw.get("phone", False)
         self.started = False
         self.submitted = False
 
@@ -162,6 +163,7 @@ class Mock:
                 if self.signup_mode == "exists": return send(200, {**USER, "identities": []})
                 if self.signup_mode == "confirm": return send(200, {**USER, "identities": [{"provider": "email"}], "confirmation_sent_at": "2026-11-08T00:00:00Z"})
                 self.signed_in = True; return send(200, SESSION)
+            if path == "/auth/v1/settings": return send(200, {"external": {"email": True, "phone": self.phone, "github": True}})
             if path == "/auth/v1/verify": self.signed_in = True; return send(200, SESSION)
             if path in ("/auth/v1/otp", "/auth/v1/recover", "/auth/v1/resend"): return send(200, {})
             if not self.signed_in: return send(401, {"msg": "no session"})
@@ -228,8 +230,9 @@ def run():
             page.on("dialog", lambda d: d.accept())
             return errs
 
+        ONLY = os.environ.get("E2E_ONLY", "")  # "flows" to skip the crawl and click-through
         # 1. Crawl every page in 4 modes
-        for signed_in in (False, True):
+        for signed_in in (() if ONLY == "flows" else (False, True)):
             for mobile in (False, True):
                 mode = f"{'in' if signed_in else 'out'}/{'mobile' if mobile else 'desktop'}"
                 print(f"Crawl {mode}")
@@ -254,7 +257,7 @@ def run():
                 c.close()
 
         # 2. Click every visible button / toggle / tab / chip on every page (desktop) and watch for errors
-        for signed_in in (False, True):
+        for signed_in in (() if ONLY == "flows" else (False, True)):
             print(f"Click-through {'signed in' if signed_in else 'signed out'}")
             c, m = ctx(signed_in, False)
             for path in (PAGES_IN if signed_in else PAGES_OUT):
@@ -329,8 +332,7 @@ def run():
             page.goto(f"{BASE}/signup.html"); page.wait_for_load_state("networkidle")
             page.fill("#a-name", "Asha Rao"); page.fill("#a-email", "asha@example.in"); page.fill("#a-pass", "Right-pass1"); page.check("#a-terms")
             page.click("#pw-form button[type=submit]"); page.wait_for_selector("#code-form:not(.hide)")
-            page.click("#a-resend"); page.wait_for_timeout(300)
-            assert any(c[1] == "/auth/v1/resend" and c[3]["type"] == "signup" for c in m.calls), "resend not sent"
+            assert page.locator("#a-resend").is_disabled(), "resend should wait 60 s"
             page.fill("#a-code", "123456"); page.click("#code-form button[type=submit]"); page.wait_for_url("**/dashboard.html")
         flow("sign up when email confirmation is on", signup_confirm, signed_in=False, signup_mode="confirm")
 
@@ -360,11 +362,36 @@ def run():
 
         def forgot(page, m):
             page.goto(f"{BASE}/forgot-password.html"); page.wait_for_load_state("networkidle")
-            page.fill("#a-email", "asha@example.in"); page.click("#reset-form button[type=submit]"); page.wait_for_selector("#reset-sent:not(.hide)")
+            assert not page.locator("#rp-via").is_visible(), "phone tab shown while SMS is off"
+            page.fill("#a-email", "asha@example.in"); page.click("#reset-form button[type=submit]"); page.wait_for_selector("#rp-code-form:not(.hide)")
             rec = [c for c in m.calls if c[1] == "/auth/v1/recover"]
             assert rec and rec[0][3]["email"] == "asha@example.in", rec
-            assert "redirect_to=http://localhost" in rec[0][2] and "reset-password.html" in rec[0][2], rec[0][2]
-        flow("forgot password sends a reset link", forgot, signed_in=False)
+            assert page.locator("#rp-resend").is_disabled(), "resend not on cooldown"
+            page.fill("#rp-code", "12345678"); page.fill("#np-pass", "Newpass99"); page.fill("#np-pass2", "Newpass99")
+            page.click("#rp-code-form button[type=submit]"); page.wait_for_url("**/dashboard.html")
+            ver = [c for c in m.calls if c[1] == "/auth/v1/verify"][0][3]
+            assert ver["type"] == "recovery" and ver["token"] == "12345678" and ver["email"] == "asha@example.in", ver
+            assert any(c[0] == "PUT" and c[1] == "/auth/v1/user" and c[3]["password"] == "Newpass99" for c in m.calls), "password not set"
+        flow("forgot password with an email code", forgot, signed_in=False)
+
+        def forgot_phone(page, m):
+            page.goto(f"{BASE}/forgot-password.html"); page.wait_for_selector("#rp-via:not(.hide)")
+            page.click('[data-via="phone"]'); page.fill("#a-phone", "98765 43210"); page.click("#reset-form button[type=submit]")
+            page.wait_for_selector("#rp-code-form:not(.hide)")
+            otp = [c for c in m.calls if c[1] == "/auth/v1/otp"][0][3]
+            assert otp["phone"] == "+919876543210" and otp["create_user"] is False, otp
+            page.fill("#rp-code", "654321"); page.fill("#np-pass", "Newpass99"); page.fill("#np-pass2", "Newpass99")
+            page.click("#rp-code-form button[type=submit]"); page.wait_for_url("**/dashboard.html")
+            ver = [c for c in m.calls if c[1] == "/auth/v1/verify"][0][3]
+            assert ver["type"] == "sms" and ver["phone"] == "+919876543210", ver
+        flow("forgot password with an SMS code", forgot_phone, signed_in=False, phone=True)
+
+        def add_phone(page, m):
+            page.goto(f"{BASE}/settings.html?tab=s-sec"); page.wait_for_selector("#ph-card:not(.hide)")
+            page.fill("#ph-new", "98765 43210"); page.click("#ph-go"); page.wait_for_selector("#ph-code-f:not(.hide)")
+            assert any(c[0] == "PUT" and c[1] == "/auth/v1/user" and c[3].get("phone") == "+919876543210" for c in m.calls)
+            page.fill("#ph-code", "111222"); page.click("#ph-go"); page.wait_for_selector("text=Current: +919876543210")
+        flow("add and verify a mobile number", add_phone, phone=True)
 
         def reset_bad(page, m):
             page.goto(f"{BASE}/reset-password.html"); page.wait_for_selector("text=Send a new link")

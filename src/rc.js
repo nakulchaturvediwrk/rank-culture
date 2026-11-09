@@ -46,6 +46,7 @@ const friendly = e => {
   const m = (e && (e.message || e.error_description || e.msg)) || String(e);
   if (/rate limit|too many/i.test(m)) return "Too many attempts. Please wait a minute and try again.";
   if (/invalid login credentials/i.test(m)) return "Wrong email or password.";
+  if (/token.*(expired|invalid)|otp.*(expired|invalid)|expired.*(token|otp)/i.test(m)) return "That code is wrong or has expired. Check the latest email, or resend.";
   if (/user already registered/i.test(m)) return "An account with this email already exists. Log in instead.";
   if (/same.*(old|current)|different from the old/i.test(m)) return "Choose a password you haven't used here before.";
   if (/(pwned|leaked|known to be weak|easy to guess)/i.test(m)) return "That password has appeared in a data breach. Please choose another.";
@@ -171,7 +172,7 @@ function authPage(mode) {
   $$("[data-oauth]").forEach(b => b.addEventListener("click", () => startOAuth(b.dataset.oauth, b)));
   const pwForm = $("#pw-form"), otpForm = $("#otp-form"), codeForm = $("#code-form");
   let email = "", codeType = "email";
-  const showCode = (to, type) => { email = to; codeType = type; $("#sent-to").textContent = to; [pwForm, otpForm].forEach(f => f && f.classList.add("hide")); codeForm.classList.remove("hide"); $("#a-code").focus(); };
+  const showCode = (to, type) => { email = to; codeType = type; $("#sent-to").textContent = to; [pwForm, otpForm].forEach(f => f && f.classList.add("hide")); codeForm.classList.remove("hide"); $("#a-code").focus(); cooldown($("#a-resend")); };
   const back = () => { codeForm.classList.add("hide"); (pwForm || otpForm).classList.remove("hide"); if (otpForm) otpForm.classList.add("hide"); authMsg(""); };
   const sendLink = async (to, btn) => {
     busy(btn, true, "Sending…");
@@ -233,8 +234,9 @@ function authPage(mode) {
     const { error } = mode === "signup"
       ? await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: location.origin + "/auth-callback.html" } })
       : await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + "/auth-callback.html" } });
-    busy(b, false); toast(error ? friendly(error) : "Sent again — check your inbox");
+    busy(b, false); toast(error ? friendly(error) : "Sent again — check your inbox"); if (!error) cooldown(b);
   });
+  $("#a-code").addEventListener("input", e => { const d = e.target.value.replace(/\D/g, ""); if (d.length === 8) codeForm.requestSubmit(); });
   $("#a-back").addEventListener("click", back);
 }
 
@@ -249,17 +251,68 @@ async function afterSignIn() {
 
 const H = {}; // page handlers
 
+// Is SMS sign-in switched on in Supabase? (Auth → Providers → Phone.) Phone options only show when it is.
+let phoneOn = null;
+const phoneEnabled = async () => {
+  if (phoneOn !== null) return phoneOn;
+  try { const r = await fetch(CFG.url + "/auth/v1/settings", { headers: { apikey: CFG.key } }); phoneOn = !!(r.ok && (await r.json()).external.phone); } catch (e) { phoneOn = false; }
+  return phoneOn;
+};
+const toE164 = v => { const d = String(v || "").replace(/\D/g, "").replace(/^0+/, "").replace(/^91(?=\d{10}$)/, ""); return /^[6-9]\d{9}$/.test(d) ? "+91" + d : null; };
+// Resend buttons wait 60 s between sends (Supabase allows one email per minute per address).
+const cooldown = (btn, secs = 60) => { const label = btn.textContent; btn.disabled = true; let t = secs; const tick = () => { if (--t <= 0) { btn.disabled = false; btn.textContent = label; } else { btn.textContent = `Resend in ${t}s`; setTimeout(tick, 1000); } }; btn.textContent = `Resend in ${t}s`; setTimeout(tick, 1000); };
+
 H["forgot-password.html"] = async () => {
-  const form = $("#reset-form");
+  const form = $("#reset-form"), codeForm = $("#rp-code-form");
+  let via = "email", target = "";
+  if (await phoneEnabled()) $("#rp-via").classList.remove("hide");
+  $$("#rp-via [data-via]").forEach(t => t.addEventListener("click", () => {
+    via = t.dataset.via;
+    $$("#rp-via [data-via]").forEach(x => { x.classList.toggle("on", x === t); x.setAttribute("aria-selected", String(x === t)); });
+    $("#rp-email-f").classList.toggle("hide", via !== "email"); $("#rp-phone-f").classList.toggle("hide", via !== "phone"); authMsg("");
+  }));
+  const send = async btn => {
+    busy(btn, true, "Sending…");
+    const { error } = via === "email"
+      ? await sb.auth.resetPasswordForEmail(target, { redirectTo: location.origin + "/reset-password.html" })
+      : await sb.auth.signInWithOtp({ phone: target, options: { shouldCreateUser: false } });
+    busy(btn, false);
+    // Don't reveal whether an account exists; only surface rate limits.
+    if (error && /rate limit|too many|seconds/i.test(error.message)) { authMsg(esc(friendly(error))); return false; }
+    return true;
+  };
   form.addEventListener("submit", async e => {
     e.preventDefault();
-    const to = $("#a-email").value.trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { $("#a-email").classList.add("error"); return; }
-    const btn = $("button[type=submit]", form); busy(btn, true, "Sending…");
-    const { error } = await sb.auth.resetPasswordForEmail(to, { redirectTo: location.origin + "/reset-password.html" });
-    busy(btn, false);
-    if (error && /rate limit|too many/i.test(error.message)) return authMsg(esc(friendly(error)));
-    authMsg(""); $("#sent-to").textContent = to; form.classList.add("hide"); $("#reset-sent").classList.remove("hide");
+    if (via === "email") {
+      target = $("#a-email").value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(target)) { $("#a-email").classList.add("error"); return; }
+    } else {
+      target = toE164($("#a-phone").value);
+      if (!target) { $("#a-phone").classList.add("error"); return authMsg("Enter a 10-digit Indian mobile number."); }
+    }
+    if (!(await send($("button[type=submit]", form)))) return;
+    authMsg(""); $("#sent-to").textContent = via === "email" ? target : target.replace(/^\+91/, "+91 ");
+    form.classList.add("hide"); $("#rp-via").classList.add("hide"); codeForm.classList.remove("hide"); $("#rp-code").focus(); cooldown($("#rp-resend"));
+  });
+  $("#rp-resend").addEventListener("click", async () => { const b = $("#rp-resend"); if (await send(b)) { toast("Sent again"); cooldown(b); } });
+  $("#rp-back").addEventListener("click", () => { codeForm.classList.add("hide"); form.classList.remove("hide"); if (phoneOn) $("#rp-via").classList.remove("hide"); authMsg(""); });
+  codeForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const code = $("#rp-code").value.replace(/\D/g, ""), pw = $("#np-pass").value;
+    if (code.length < 6) { $("#rp-code").classList.add("error"); return authMsg("Enter the code we sent you."); }
+    const weak = pwProblem(pw, via === "email" ? target : "");
+    if (weak) { $("#np-pass").classList.add("error"); return authMsg(esc(weak)); }
+    if (pw !== $("#np-pass2").value) { $("#np-pass2").classList.add("error"); return authMsg("The two passwords don't match."); }
+    const btn = $("button[type=submit]", codeForm); busy(btn, true, "Checking…");
+    const { error } = via === "email"
+      ? await sb.auth.verifyOtp({ email: target, token: code, type: "recovery" })
+      : await sb.auth.verifyOtp({ phone: target, token: code, type: "sms" });
+    if (error) { busy(btn, false); return authMsg(esc(friendly(error))); }
+    const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") { try { localStorage.setItem("rc-next", "reset-password.html"); } catch (err) {} return go("mfa.html"); }
+    const up = await sb.auth.updateUser({ password: pw });
+    if (up.error) { busy(btn, false); return authMsg(esc(friendly(up.error))); }
+    toast("Password reset — you're logged in"); afterSignIn();
   });
 };
 
@@ -656,6 +709,11 @@ H["settings.html"] = async () => {
       <div class="field"><label for="pw-new2">Type it again</label><input class="input" id="pw-new2" type="password" autocomplete="new-password" maxlength="72"></div>
       <div class="field hide" id="pw-nonce-f"><label for="pw-nonce">Code we just emailed you</label><input class="input mono" id="pw-nonce" inputmode="numeric" autocomplete="one-time-code" maxlength="10"><span class="hint t-xs muted">For your security we confirm it's you before changing a password.</span></div>
       <div class="row"><button class="btn btn-primary" type="submit">Save password</button></div></form>
+    <form class="card card-lg stack hide" id="ph-card" novalidate><div><h2 class="t-h3">Mobile number</h2><p class="t-sm muted">Add a number to reset your password by SMS code. It's never shown to anyone.</p></div>
+      <p class="t-sm" id="ph-now"></p>
+      <div class="field"><label for="ph-new">Mobile number</label><div class="row" style="gap:var(--s2);flex-wrap:nowrap"><span class="input" style="flex:none;width:auto">+91</span><input class="input" id="ph-new" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="14" style="flex:1"></div></div>
+      <div class="field hide" id="ph-code-f"><label for="ph-code">Code we just sent by SMS</label><input class="input mono" id="ph-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div>
+      <div class="row"><button class="btn btn-primary" type="submit" id="ph-go">Send code</button></div></form>
     <div class="card card-lg stack"><div class="row between"><div><h2 class="t-h3">Two-step verification</h2><p class="t-sm muted">Ask for a code from an authenticator app (Google Authenticator, Authy, 1Password) every time you sign in.</p></div>${totp ? '<span class="badge green">On</span>' : '<span class="badge">Off</span>'}</div>
       <div id="mfa-box">${totp ? `<button class="btn" id="mfa-off" style="border-color:var(--red);color:var(--red)">Turn off two-step verification</button>` : `<button class="btn btn-primary" id="mfa-on">${ic("lock")} Set up two-step verification</button>`}</div></div>
     <div class="card card-lg stack"><h2 class="t-h3">Sessions</h2><p class="t-sm muted">Lost a phone or used a shared computer? Sign out everywhere, including this device.</p><button class="btn" id="sign-out-all">Sign out of all devices</button></div></div>
@@ -694,6 +752,25 @@ H["settings.html"] = async () => {
     $("#pw-new").value = $("#pw-new2").value = $("#pw-nonce").value = ""; $("#pw-nonce-f").classList.add("hide");
     toast("Password saved");
   });
+  if (await phoneEnabled()) {
+    $("#ph-card").classList.remove("hide");
+    const cur = ME.user.phone ? "+" + String(ME.user.phone).replace(/^\+/, "") : "";
+    $("#ph-now").innerHTML = cur ? `Current: <strong>${esc(cur)}</strong>` : "No number added yet.";
+    let pending = null;
+    $("#ph-card").addEventListener("submit", async e => {
+      e.preventDefault(); const btn = $("#ph-go");
+      if (!pending) {
+        const ph = toE164($("#ph-new").value); if (!ph) { $("#ph-new").classList.add("error"); return toast("Enter a 10-digit Indian mobile number"); }
+        busy(btn, true, "Sending…"); const { error } = await sb.auth.updateUser({ phone: ph }); busy(btn, false);
+        if (error) return toast(friendly(error));
+        pending = ph; $("#ph-code-f").classList.remove("hide"); $("#ph-code").focus(); btn.textContent = "Verify number"; return;
+      }
+      const code = $("#ph-code").value.replace(/\D/g, ""); if (code.length < 6) { $("#ph-code").classList.add("error"); return; }
+      busy(btn, true, "Checking…"); const { error } = await sb.auth.verifyOtp({ phone: pending, token: code, type: "phone_change" }); busy(btn, false);
+      if (error) return toast(friendly(error));
+      $("#ph-now").innerHTML = `Current: <strong>${esc(pending)}</strong>`; pending = null; $("#ph-code-f").classList.add("hide"); $("#ph-new").value = $("#ph-code").value = ""; btn.textContent = "Send code"; toast("Number verified");
+    });
+  }
   const on = $("#mfa-on"), off = $("#mfa-off");
   if (on) on.addEventListener("click", async () => {
     busy(on, true);

@@ -4,8 +4,10 @@
 const LOGO_MARK = `<svg viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" fill="#0B0B0C"/><rect x="5" y="16" width="4.5" height="7" fill="#fff"/><rect x="11.75" y="11" width="4.5" height="12" fill="#fff"/><rect x="18.5" y="5" width="4.5" height="18" fill="#2D50CD"/></svg>`;
 const LOGO_MARK_DARK = `<svg viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" fill="#fff"/><rect x="5" y="16" width="4.5" height="7" fill="#0B0B0C"/><rect x="11.75" y="11" width="4.5" height="12" fill="#0B0B0C"/><rect x="18.5" y="5" width="4.5" height="18" fill="#2D50CD"/></svg>`;
 
+// The Rank Culture logo (assets/logo-*.png come from the brand artwork; see assets/logo.png).
 const logo = (href = "index.html", dark = false) =>
-  `<a class="logo${dark ? " on-dark" : ""}" href="${href}" aria-label="Rank Culture home">${dark ? LOGO_MARK_DARK : LOGO_MARK}<span>Rank Culture</span></a>`;
+  `<a class="logo${dark ? " on-dark" : ""}" href="${href}" aria-label="The Rank Culture — home"><img class="logo-mark" src="assets/logo-64.png" width="32" height="32" alt=""><span>Rank Culture</span></a>`;
+const logoFull = (h = 120) => `<img class="logo-full" src="assets/logo.png" height="${h}" style="height:${h}px;width:auto" alt="The Rank Culture — turn skills into rank">`;
 
 // Stroke icons, 24px grid
 const P = {
@@ -55,7 +57,14 @@ const head = (title, desc) => `<!doctype html>
 <meta property="og:title" content="${title} — Rank Culture">
 <meta property="og:description" content="Compete in real-work skill tournaments. Earn a verified rank. Get hired on proof, not paper.">
 <meta name="theme-color" content="#0B0B0C">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/logo-180.png">
+<meta property="og:image" content="https://rank-culture.vercel.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="The Rank Culture">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://rank-culture.vercel.app/assets/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -159,7 +168,7 @@ const footer = () => `
 <footer class="footer"><div class="container">
   <div class="cols">
     <div class="stack">
-      ${logo("index.html", true)}
+      <a href="index.html" aria-label="The Rank Culture — home">${logoFull(112)}</a>
       <p class="t-sm" style="color:#A9ABB5;max-width:36ch">Whoever deserves it gets it. Compete in real-work skill tournaments, earn a verified rank and get hired on proof — not on paper.</p>
     </div>
     <div><h4>Candidates</h4><ul>
@@ -226,4 +235,4 @@ const tierBadge = (score) => {
 };
 
 const shellParts = () => ({ pub: publicHeader(""), app: appHeader(""), side: sidebar(""), bottom: bottomNav(""), foot: footer() });
-module.exports = { shellJS, shellParts, logo, LOGO_MARK, ic, head, publicPage, appPage, barePage, bar, pageHead, tierBadge, ME, footer };
+module.exports = { shellJS, shellParts, logo, logoFull, LOGO_MARK, ic, head, publicPage, appPage, barePage, bar, pageHead, tierBadge, ME, footer };

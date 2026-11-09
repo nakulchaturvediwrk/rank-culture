@@ -1,9 +1,9 @@
-const { barePage, ic, bar, tierBadge } = require("./layout");
+const { barePage, ic, bar, tierBadge, logo, logoFull } = require("./layout");
 
 const authSide = (title, body) => `
 <aside class="auth-side">
   <div class="stack-lg">
-    <span class="badge blue">Rank Culture</span>
+    <a href="index.html" aria-label="The Rank Culture — home">${logoFull(150)}</a>
     <h2 class="t-h1">${title}</h2>
     <p class="muted">${body}</p>
   </div>
@@ -24,8 +24,8 @@ const pwField = (id, label, auto, hint = "") => `<div class="field"><label for="
 const PW_HINT = "At least 8 characters, with a letter and a number.";
 const codeStep = (what) => `
 <form class="stack hide" id="code-form" novalidate>
-  <div class="card soft"><div class="row">${ic("mail")}<p class="t-sm">We sent ${what} to <strong id="sent-to"></strong>. Open the link <strong>in this browser</strong>, or type the code from the email below. Check spam if it hasn't arrived in a minute.</p></div></div>
-  <div class="field"><label for="a-code">Code from the email</label><input class="input mono" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
+  <div class="card soft"><div class="row">${ic("mail")}<p class="t-sm">We emailed ${what} to <strong id="sent-to"></strong>. Type the code below (or open the link in the email on this device). It can take a minute — check spam too.</p></div></div>
+  <div class="field"><label for="a-code">Code from the email</label><input class="input mono" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="12345678"></div>
   <button class="btn btn-primary btn-block" type="submit">Continue ${ic("arrow")}</button>
   <div class="row between"><button class="btn btn-ghost btn-sm" type="button" id="a-resend">Resend email</button><button class="btn btn-ghost btn-sm" type="button" id="a-back">Use a different email</button></div>
 </form>`;
@@ -36,23 +36,24 @@ const login = barePage({
   body: `
 <div class="auth">${authSide("Welcome back, competitor.", "Your rank, your tournaments and your fast-tracks are waiting.")}
 <div class="auth-form"><div class="stack-lg">
+  <a class="auth-mlogo" href="index.html" aria-label="The Rank Culture — home">${logoFull(88)}</a>
   <div class="stack"><h1 class="t-h1">Log in</h1><p class="muted t-sm">New here? <a class="link" href="signup.html">Create a free account</a></p></div>
   <div id="auth-msg"></div>
   <form class="stack" id="pw-form" novalidate>
     ${googleBtn}
     <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="username" placeholder="you@example.com"></div>
     ${pwField("a-pass", "Password", "current-password")}
-    <div class="row between t-sm"><a class="link" href="forgot-password.html">Forgot password?</a><button class="link" type="button" id="a-link-mode">Email me a sign-in link instead</button></div>
+    <div class="row between t-sm"><a class="link" href="forgot-password.html">Forgot password?</a><button class="link" type="button" id="a-link-mode">Log in with an email code instead</button></div>
     <button class="btn btn-primary btn-lg btn-block" type="submit">Log in ${ic("arrow")}</button>
     ${legalLine}
     <p class="t-xs muted">Recruiter? Employer accounts are invite-only during the pilot — <a class="link" href="contact.html?topic=employer">request access</a>.</p>
   </form>
   <form class="stack hide" id="otp-form" novalidate>
     <div class="field"><label for="a-email2">Email</label><input class="input" id="a-email2" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a sign-in link ${ic("arrow")}</button>
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a sign-in code ${ic("arrow")}</button>
     <button class="btn btn-ghost btn-block" type="button" id="a-pw-mode">Log in with a password instead</button>
   </form>
-  ${codeStep("a sign-in link")}
+  ${codeStep("a one-time sign-in code")}
 </div></div></div>`,
 });
 
@@ -61,6 +62,7 @@ const signup = barePage({
   body: `
 <div class="auth">${authSide("Fight to get hired. Not the traditional way.", "Free forever. No resume needed. Your first tournament could be this weekend.")}
 <div class="auth-form"><div class="stack-lg">
+  <a class="auth-mlogo" href="index.html" aria-label="The Rank Culture — home">${logoFull(88)}</a>
   <div class="stack"><h1 class="t-h1">Get ranked free</h1><p class="muted t-sm">Already competing? <a class="link" href="login.html">Log in</a></p></div>
   <div id="auth-msg"></div>
   <form class="stack" id="pw-form" novalidate>
@@ -72,24 +74,34 @@ const signup = barePage({
     <button class="btn btn-primary btn-lg btn-block" type="submit">Create account ${ic("arrow")}</button>
     <p class="t-xs muted">Your profile is private until you choose to make it public.</p>
   </form>
-  ${codeStep("a confirmation link")}
+  ${codeStep("a one-time code to confirm your email")}
 </div></div></div>`,
 });
 
 const forgot = barePage({
   title: "Reset your password",
   body: `
-<div class="auth">${authSide("Locked out? Happens to everyone.", "We'll email you a link to set a new password. Your rank and history stay exactly as they are.")}
+<div class="auth">${authSide("Locked out? Happens to everyone.", "We'll send you a one-time code. Enter it with your new password and you're back in — your rank and history stay as they are.")}
 <div class="auth-form"><div class="stack-lg">
+  <a class="auth-mlogo" href="index.html" aria-label="The Rank Culture — home">${logoFull(88)}</a>
   <a class="link" href="login.html">${ic("back")} Back to log in</a>
-  <div class="stack"><h1 class="t-h1">Reset your password</h1><p class="muted">Enter the email you signed up with. Signed up with Google or GitHub, or never set a password? This sets one for you.</p></div>
+  <div class="stack"><h1 class="t-h1">Reset your password</h1><p class="muted">Signed up with Google or GitHub, or never set a password? This sets one for you.</p></div>
   <div id="auth-msg"></div>
+  <div class="tabs hide" role="tablist" id="rp-via"><button class="on" type="button" role="tab" aria-selected="true" data-via="email">Email</button><button type="button" role="tab" aria-selected="false" data-via="phone">Phone</button></div>
   <form class="stack" id="reset-form" novalidate>
-    <div class="field"><label for="a-email">Email</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-    <button class="btn btn-primary btn-lg btn-block" type="submit">Email me a reset link ${ic("arrow")}</button>
+    <div class="field" id="rp-email-f"><label for="a-email">Email you signed up with</label><input class="input" id="a-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+    <div class="field hide" id="rp-phone-f"><label for="a-phone">Mobile number on your account</label><div class="row" style="gap:var(--s2);flex-wrap:nowrap"><span class="input" style="flex:none;width:auto">+91</span><input class="input" id="a-phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="14" placeholder="98765 43210" style="flex:1"></div><span class="hint t-xs muted">Works if you've added and verified this number in Settings.</span></div>
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Send me a code ${ic("arrow")}</button>
   </form>
-  <div class="card soft hide" id="reset-sent"><div class="row">${ic("mail")}<p class="t-sm">If an account exists for <strong id="sent-to"></strong>, a reset link is on its way. Open it <strong>in this browser</strong>. Check spam if it hasn't arrived in a minute.</p></div></div>
-  <p class="t-sm muted">Lost access to your email? <a class="link" href="contact.html">Contact support</a>.</p>
+  <form class="stack hide" id="rp-code-form" novalidate>
+    <div class="card soft"><div class="row">${ic("mail")}<p class="t-sm">If an account exists for <strong id="sent-to"></strong>, we've sent it a one-time code. It can take a minute — check spam too.</p></div></div>
+    <div class="field"><label for="rp-code">Code</label><input class="input mono" id="rp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="12345678"></div>
+    ${pwField("np-pass", "New password", "new-password", PW_HINT)}
+    ${pwField("np-pass2", "Type it again", "new-password")}
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Reset password and log in ${ic("arrow")}</button>
+    <div class="row between"><button class="btn btn-ghost btn-sm" type="button" id="rp-resend">Resend code</button><button class="btn btn-ghost btn-sm" type="button" id="rp-back">Start again</button></div>
+  </form>
+  <p class="t-sm muted">Lost access to your email and phone? <a class="link" href="contact.html">Contact support</a>.</p>
 </div></div></div>`,
 });
 
@@ -98,6 +110,7 @@ const resetPw = barePage({
   body: `
 <div class="auth">${authSide("Almost there.", "Choose a new password and you're back in.")}
 <div class="auth-form"><div class="stack-lg">
+  <a class="auth-mlogo" href="index.html" aria-label="The Rank Culture — home">${logoFull(88)}</a>
   <div class="stack"><h1 class="t-h1">Set a new password</h1><p class="muted t-sm" id="np-for">Checking your reset link…</p></div>
   <div id="auth-msg"></div>
   <form class="stack hide" id="np-form" novalidate>
@@ -116,7 +129,7 @@ const obShell = (step, body) => barePage({
   title: `Onboarding · Step ${step} of 3`,
   header: "none",
   body: `
-<header class="header"><div class="container"><a class="logo" href="index.html"><svg viewBox="0 0 28 28"><rect width="28" height="28" fill="#0B0B0C"/><rect x="5" y="16" width="4.5" height="7" fill="#fff"/><rect x="11.75" y="11" width="4.5" height="12" fill="#fff"/><rect x="18.5" y="5" width="4.5" height="18" fill="#2D50CD"/></svg><span>Rank Culture</span></a><span class="label muted">Step ${step} of 3</span></div></header>
+<header class="header"><div class="container">${logo()}<span class="label muted">Step ${step} of 3</span></div></header>
 <div class="container section-sm" style="max-width:960px">
   <div class="steps mb3">${["Your field", "Your skills", "First tournament"].map((l, i) => `<div class="${i + 1 < step ? "done" : i + 1 === step ? "now" : ""}"><div class="seg"></div><div class="label ${i + 1 === step ? "" : "muted"}">${i + 1} · ${l}</div></div>`).join("")}</div>
   ${body}
