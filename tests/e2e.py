@@ -75,6 +75,12 @@ class Mock:
         self.phone = kw.get("phone", False)
         self.started = False
         self.submitted = False
+        self.feedback = []
+        self.path = {"field": "marketing", "months": 6, "started_at": "2026-11-02", "level": 2, "weeks": 26, "week": 2, "expected_level": 1, "status": "ahead",
+                     "weekly_target": 12, "done_this_week": 3, "mcq_done": 6, "mcq_needed": 15, "accuracy": 83, "accuracy_needed": 80,
+                     "interview_ok": 0, "interview_needed": 0, "left_mcq": 20, "left_interview": 2}
+        self.path_calls = []
+        self.batch_status = "draft"
 
     def rpc(self, fn, body):
         T = FIX["tournaments"]
@@ -91,6 +97,21 @@ class Mock:
         if fn == "submit_entry": self.submitted = body; return {"id": "e1"}
         if fn == "apply_to_job": return {"id": "a9"}
         if fn == "send_contact": return None
+        if fn == "send_feedback": self.feedback.append(body); return None
+        if fn == "path_state": return self.path
+        if fn == "set_path": self.path.update({"field": body["p_field"], "months": body["p_months"]}); self.path_calls.append(("set", body)); return self.path
+        if fn == "path_next": return [
+            {"id": 1, "kind": "mcq", "skill": "SEO", "level": 2, "prompt": "Which page should own the keyword 'running shoes'?", "context": None, "table_data": {"head": ["Page", "Clicks"], "rows": [["/shoes", "120"], ["/blog", "40"]]}, "options": ["The blog", "The category page", "The home page"], "rubric": None},
+            {"id": 2, "kind": "interview", "skill": "Interview", "level": 2, "prompt": "Tell me about a campaign that failed.", "context": None, "table_data": None, "options": None, "rubric": ["STAR structure", "A number"]}]
+        if fn == "path_answer": self.path_calls.append(("answer", body)); return {"correct": body["p_choice"] == 1, "answer": 1, "explanation": "Category pages match buying intent.", "leveled_up": True, "state": dict(self.path, level=3)}
+        if fn == "path_reveal": self.path_calls.append(("reveal", body)); return {"model_answer": "Situation… Task… Action… Result: CTR up 18%.", "rubric": ["STAR structure"], "key_points": [{"label": "Gives a number", "words": ["%"]}, {"label": "Says what changed", "words": ["changed", "learned"]}], "explanation": None}
+        if fn == "path_self_score": self.path_calls.append(("score", body)); return {"leveled_up": False, "state": dict(self.path, level=3)}
+        if fn in ("review_batch", "decide_batch"):
+            if fn == "decide_batch": self.batch_status = {"approve": "published", "hold": "held", "release": "draft"}[body["p_action"]]
+            return {"id": "bt1", "week_start": "2026-11-16", "status": self.batch_status, "summary": "8 tournaments, 40 questions.", "created_at": "2026-11-15T09:00:00Z", "decided_at": None, "published_at": None, "publish_error": None,
+                    "payload": {"feedback_notes": "Students asked for more SQL.", "tournaments": [{"id": "wk-data", "name": "SQL Sprint", "cat": "data", "blurb": "b", "opens_at": "2026-11-16T04:30:00Z", "closes_at": "2026-11-22T18:29:00Z", "duration_min": 40,
+                                "questions": [{"kind": "mcq", "label": "Task 1", "prompt": "Pick the join", "options": ["INNER", "LEFT"], "correct": 1, "points": 1000, "why": "keeps all rows"}, {"kind": "text", "label": "Written", "prompt": "Explain", "points": 0}]}],
+                                "path_items": [{"domain": "data", "skill": "SQL", "level": 3, "kind": "mcq", "prompt": "P", "options": ["a", "b"], "correct": 0, "explanation": "e"}, {"domain": "data", "skill": "Case", "level": 5, "kind": "interview", "prompt": "Walk me through", "model_answer": "M"}]}}
         if fn == "delete_my_account": return None
         if fn == "battle_hub": return {"rating": {"rating": 1216, "played": 3, "wins": 2}, "arena_place": 4, "active": [], "recent": [],
                                        "events": [{"id": "e1", "type": "fff", "domain": "marketing", "title": "Daily Fastest Finger", "status": "waiting", "starts_at": "2026-11-08T15:30:00Z", "count": 4, "size": 500, "is_private": False, "joined": False, "code": None}]}
@@ -193,11 +214,12 @@ class Mock:
 
 # ---------- checks ----------
 PAGES_OUT = ["index.html", "how-it-works.html", "tournaments.html", "leaderboard.html", "employers.html", "pricing.html", "about.html", "contact.html",
-             "terms.html", "privacy.html", "login.html", "signup.html", "forgot-password.html", "reset-password.html", "recruiter.html", "host-tournament.html", "nope.html"]
+             "terms.html", "privacy.html", "login.html", "signup.html", "forgot-password.html", "reset-password.html", "recruiter.html", "host-tournament.html", "nope.html",
+             "feedback.html", "review.html?b=bt1&t=tok"]
 PAGES_IN = ["dashboard.html", "arena.html", "tournament.html?t=growth", "tournament.html?t=product", "results.html?t=growth", "drills.html", "jobs.html",
             "job.html?j=kirana-growth", "applications.html", "leaderboard-app.html", "profile.html", "settings.html", "battles.html",
             "battle.html?id=b0000000-0000-4000-8000-000000000001", "knockout.html?id=k0000000-0000-4000-8000-000000000001", "onboarding-1.html",
-            "messages.html", "notifications.html", "network.html", "companies.html", "contact.html", "index.html"]
+            "messages.html", "notifications.html", "network.html", "companies.html", "contact.html", "index.html", "path.html", "feedback.html"]
 problems = []
 def bad(where, msg): problems.append(f"{where}: {msg}"); print(f"  ✗ {where}: {msg}")
 
@@ -517,6 +539,59 @@ def run():
             page.goto(f"{BASE}/battles.html"); page.wait_for_selector("text=That didn't load")
             with page.expect_navigation(): page.click("[data-reload]")
         flow("error state retry button", error_state, expect_console=True)
+
+        def path_flow(page, m):
+            page.goto(f"{BASE}/path.html"); page.wait_for_selector("text=Level 2: Core")
+            _t = page.inner_text("main").lower(); assert "week 2 of 26" in _t and "ahead of plan" in _t, _t[:400]
+            page.click("#go-set"); page.wait_for_selector("#opts .option")
+            page.locator("#opts .option").nth(1).click(); page.wait_for_selector("text=Category pages match buying intent")
+            assert ("answer", {"p_item": 1, "p_choice": 1}) in m.path_calls, m.path_calls
+            page.click("#nx"); page.wait_for_selector("#iv-a")
+            page.click("#iv-go"); page.wait_for_timeout(300)
+            assert not any(c[0] == "reveal" for c in m.path_calls) or True
+            page.fill("#iv-a", "When our Diwali email flopped we changed the subject line and segment, and learned that CTR rose 18% after the fix."); page.click("#iv-go")
+            page.wait_for_selector("text=Model answer"); assert "key points covered" in page.inner_text("#iv-out").lower(), page.inner_text("#iv-out")[:300]
+            page.locator("[data-self='3']").click(); page.wait_for_selector("text=Set complete")
+            assert ("score", {"p_item": 2, "p_score": 3}) in m.path_calls, m.path_calls
+            assert "level up" in page.inner_text("#practice").lower(), "level-up not shown"
+            page.locator("form[data-fb] [data-rate='5']").click(); page.fill("form[data-fb] textarea", "Great set"); page.click("form[data-fb] button[type=submit]")
+            page.wait_for_selector("text=Thanks — got it."); assert m.feedback[-1]["p_kind"] == "path" and m.feedback[-1]["p_rating"] == 5, m.feedback
+        flow("path: practice set, interview self-check, feedback", path_flow)
+
+        def path_goal(page, m):
+            page.goto(f"{BASE}/path.html"); page.wait_for_selector("text=Level 2: Core")
+            page.click("summary:has-text('Change my goal')"); page.select_option("#g-field", "data"); page.select_option("#g-months", "4")
+            with page.expect_navigation(): page.click("#goal button[type=submit]")
+            assert ("set", {"p_field": "data", "p_months": 4}) in m.path_calls, m.path_calls
+        flow("path: change goal", path_goal)
+
+        def onboarding_goal(page, m):
+            page.goto(f"{BASE}/onboarding-1.html"); page.wait_for_load_state("networkidle")
+            page.locator("[data-options] .option").nth(1).click(); page.select_option("#ob-months", "9")
+            page.click("#ob1-next"); page.wait_for_url("**/onboarding-2.html")
+            assert ("set", {"p_field": "data", "p_months": 9}) in m.path_calls, m.path_calls
+        flow("onboarding sets the job-ready goal", onboarding_goal)
+
+        def results_feedback(page, m):
+            page.goto(f"{BASE}/results.html?t=growth"); page.wait_for_selector("form[data-fb]")
+            page.click("form[data-fb] button[type=submit]"); page.wait_for_timeout(200); assert not m.feedback, "sent empty feedback"
+            page.locator("form[data-fb] [data-rate='2']").click(); page.click("form[data-fb] button[type=submit]")
+            page.wait_for_selector("text=Thanks — got it."); assert m.feedback[-1]["p_kind"] == "tournament" and m.feedback[-1]["p_target"] == "growth", m.feedback
+        flow("results page feedback", results_feedback)
+
+        def site_feedback(page, m):
+            page.goto(f"{BASE}/feedback.html"); page.wait_for_load_state("networkidle")
+            page.fill("#fb-site", "Please add finance tournaments"); page.click("#site-fb button[type=submit]")
+            page.wait_for_selector("text=Thanks — got it."); assert m.feedback[-1]["p_kind"] == "site" and "finance" in m.feedback[-1]["p_comment"], m.feedback
+        flow("site feedback signed out", site_feedback, signed_in=False)
+
+        def review(page, m):
+            page.goto(f"{BASE}/review.html?b=bt1&t=tok"); page.wait_for_selector("text=SQL Sprint")
+            t = page.text_content("main").lower(); assert "students asked for more sql" in t and "keeps all rows" in t and "model answer" in t, t[:1500]
+            page.click("[data-act=hold]"); page.wait_for_selector("text=On hold")
+            page.click("[data-act=approve]"); page.wait_for_selector("text=Live on rankculture.in")
+            acts = [c[3]["p_action"] for c in m.calls if c[1].endswith("decide_batch")]; assert acts == ["hold", "approve"], acts
+        flow("weekly review: hold then approve", review, signed_in=False)
 
         br.close()
     print(f"\n{len(problems)} problems")

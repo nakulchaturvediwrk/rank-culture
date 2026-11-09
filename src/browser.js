@@ -2,7 +2,7 @@
 // after the auth gate in rc.js has decided the visitor may see it.
 const pages = Object.assign({},
   require("./pages-public").pages, require("./pages-auth").pages, require("./pages-app").pages,
-  require("./pages-app2").pages, require("./pages-recruiter").pages, require("./pages-battle").pages);
+  require("./pages-app2").pages, require("./pages-recruiter").pages, require("./pages-battle").pages, require("./pages-path").pages);
 const rc = require("./rc");
 window.RCBODY = function (file) {
   if (!file) { const p = location.pathname.split("/").pop() || "index.html"; file = /\.html$/.test(p) ? p : p + ".html"; }

@@ -294,6 +294,7 @@ textarea.input { min-height: 120px; resize: vertical; }
 .banner.red { background: var(--red-soft); border-color: var(--red); }
 .banner.blue { background: var(--blue-soft); }
 .banner.amber { background: var(--amber-soft); border-color: var(--amber); }
+.banner.green { background: var(--green-soft); border-color: var(--green); }
 
 /* ---------- Hero ---------- */
 .hero { padding: var(--s9) 0 var(--s8); border-bottom: var(--border); }

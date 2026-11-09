@@ -265,7 +265,9 @@ module.exports = function install(H, c) {
         stage.innerHTML = `<div class="card dark card-lg stack" style="box-shadow:8px 8px 0 var(--blue)"><div class="label" style="color:#9DB1FF">${esc(s.title || "Battle")} · Final</div>
           ${mine ? `<div class="score"><span class="num">${ordinal(mine.place)}</span><span class="of">of ${s.count}</span></div><p>${mine.place === 1 ? "You won. " : ""}<strong class="mono">${mine.score}</strong> points · ${mine.correct}/${s.n_q} correct.${mine.delta != null ? ` Arena rating <strong class="mono ${mine.delta >= 0 ? "" : ""}">${mine.delta >= 0 ? "+" : ""}${mine.delta}</strong>.` : " Practice battle — your arena rating didn't change."}</p>` : `<h1 class="t-h2">Battle finished</h1>`}
           <div class="row">${s.knockout_id ? `<a class="btn btn-primary" href="knockout.html?id=${esc(s.knockout_id)}">Back to the bracket</a>` : s.kind === "quick" && !s.is_private ? `<button class="btn btn-primary" id="bt-again">Play again</button>` : ""}<a class="btn" href="battles.html">All battles</a><a class="btn btn-ghost" href="leaderboard-app.html?k=skill">Skill rankings</a></div></div>
-          <p class="t-sm muted">Every question you saw counts towards your skill stats, so the skill leaderboards already include this battle.</p>`;
+          <p class="t-sm muted">Every question you saw counts towards your skill stats, so the skill leaderboards already include this battle.</p>
+          <div data-fb-slot data-kind="${s.ranked ? "battle" : "drill"}" data-target="${esc(s.domain || "")}" data-title="How was this ${s.ranked ? "battle" : "drill"}?"></div>`;
+        if (c.fillFeedback) c.fillFeedback(stage);
         const ag = $("#bt-again"); if (ag) ag.addEventListener("click", async () => { busy(ag, true, "Finding…"); try { const nid = await q(sb.rpc("battle_quick", { p_size: s.size, p_scoring: s.scoring, p_domain: s.domain })); location.href = `battle.html?id=${nid}`; } catch (e) { busy(ag, false); toast(friendly(e)); } });
         return;
       }
