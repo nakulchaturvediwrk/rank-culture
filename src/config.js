@@ -7,5 +7,7 @@ module.exports = {
   storageKey: "sb-vxzbiytdjcyaqupgxjzx-auth-token",
   // Cloudflare Turnstile site key (public). Empty = no CAPTCHA. Set it, deploy, then switch on
   // Supabase → Auth → Attack Protection → CAPTCHA with the matching secret key.
+  // Show "Continue with Google" only once Supabase → Auth → Providers → Google is enabled.
+  googleEnabled: false,
   turnstileSiteKey: "0x4AAAAAAF6JIgCLMeuj-3Ca",
 };
