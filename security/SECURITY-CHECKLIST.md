@@ -13,11 +13,11 @@
 - [x] Account deletion needs a recent login; deletes all player data
 - [x] No secrets in the repository or its history
 - [x] `npm audit`: 0 vulnerabilities
-- [ ] Migration 0017 applied to production
+- [x] Migration 0017 applied to production (12 Nov 2026)
 - [ ] "Require current password when updating" on (after OAuth test)
-- [ ] MFA on every admin account (Supabase, Vercel, GitHub, Google Cloud, GoDaddy, Resend, ImprovMX, Brevo)
-- [ ] Migration 0018 applied (bulk-delete, TRUNCATE and DROP guards; backup export)
-- [ ] Drive backup script set up (`ops/backup/README.md`) and first backup checked
+- [x] MFA on every admin account (Supabase, Vercel, GitHub, GoDaddy, Resend, ImprovMX done 12 Nov 2026; Brevo signs in through Google; confirm 2-Step Verification on both Google accounts)
+- [x] Migration 0018 applied (bulk-delete, TRUNCATE and DROP guards; backup export) (12 Nov 2026)
+- [x] Drive backup script set up in nakulchaturvedi.work@gmail.com; first backup 12 Nov 2026 05:18 IST verified (2 users)
 - [ ] One tested restore from a Drive backup
 - [ ] Error tracking and alerting
 - [ ] CI running tests on every push

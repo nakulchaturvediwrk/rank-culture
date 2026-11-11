@@ -1,6 +1,6 @@
 # Google Drive backup of player data
 
-A Google Apps Script in Nakul's Google account copies all player data into his Drive:
+A Google Apps Script in Nakul's Google account **nakulchaturvedi.work@gmail.com** (project "Rank Culture backup", set up 12 Nov 2026) copies all player data into that Drive:
 
 - **When:** within an hour of every 50th sign-up (50, 100, 150 …), plus every Sunday at 3 AM IST, plus whenever you run `backupNow()`.
 - **What:** one new Google Sheet per backup (tabs: users, ratings, tournament_entries, registrations, applications, skill_stats, arena_ratings, paths, path_attempts, contact_messages, feedback) plus an `.xlsx` copy, in the Drive folder **Rank Culture backups**. Passwords, login tokens and MFA secrets are never included.
