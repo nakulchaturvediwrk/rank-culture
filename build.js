@@ -27,7 +27,7 @@ for (const [file, html] of Object.entries(pages)) {
   const headPart = html.slice(0, html.indexOf("<body>")).replace('<script src="assets/shell.js"></script>', "");
   fs.writeFileSync(path.join(OUT, file), minify(headPart) + `<body><script src="assets/site.js"></script><script>RCBODY(${JSON.stringify(file)})</script><noscript>Please enable JavaScript to view the Rank Culture prototype.</noscript></body></html>`);
 }
-require("child_process").execSync(`${fs.existsSync(path.join(__dirname, "node_modules/.bin/esbuild")) ? path.join(__dirname, "node_modules/.bin/esbuild") : "npx --yes esbuild@0.24.0"} src/browser.js --bundle --minify --format=iife --outfile=${path.join(OUT, "assets/site.js")}`, { stdio: "inherit" });
+require("child_process").execSync(`${fs.existsSync(path.join(__dirname, "node_modules/.bin/esbuild")) ? path.join(__dirname, "node_modules/.bin/esbuild") : "npx --yes esbuild@0.25.12"} src/browser.js --bundle --minify --format=iife --outfile=${path.join(OUT, "assets/site.js")}`, { stdio: "inherit" });
 { const f = path.join(OUT, "assets/site.js"); fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(/\n\s*/g, " ").replace(/> </g, "><")); }
 for (const f of fs.readdirSync(path.join(__dirname, "assets"))) for (const d of [OUT, STATIC]) fs.copyFileSync(path.join(__dirname, "assets", f), path.join(d, "assets", f));
 
