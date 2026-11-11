@@ -58,6 +58,13 @@ ok("wrong answer is marked wrong and shows the key", r.correct === false && r.an
 ok("15 answers at 93% → Core", r.leveled_up === true && r.state.level === 2, JSON.stringify(r.state));
 const ss = (await su(`select attempted, correct from public.skill_stats where user_id=$1 and skill='SQL'`, [B.id])).rows[0];
 ok("path answers feed skill stats", ss && ss.attempted === 15 && ss.correct === 14, JSON.stringify(ss));
+await throws("a question answered right can't be answered again", B, `select public.path_answer($1, $2)`, [ids[0], keys[ids[0]]], /already answered/);
+await throws("a missed question can't be retried the same day", B, `select public.path_answer($1, $2)`, [ids[14], keys[ids[14]]], /tomorrow/);
+await su(`update public.path_attempts set created_at = now() - interval '2 days' where user_id = $1 and item_id = $2`, [B.id, ids[14]]);
+r = (await one(B, `select public.path_answer($1, $2) r`, [ids[14], keys[ids[14]]])).r;
+const ss2 = (await su(`select attempted, correct from public.skill_stats where user_id=$1 and skill='SQL'`, [B.id])).rows[0];
+ok("retry next day works but doesn't re-count skill stats", r.correct === true && ss2.attempted === 15 && ss2.correct === 14, JSON.stringify(ss2));
+await throws("invalid choice rejected", B, `select public.path_answer($1, 9)`, [ids[15]], /invalid choice/);
 
 // A struggling student does not level up.
 const C = await newUser(db, "Chirag");

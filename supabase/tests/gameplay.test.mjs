@@ -278,5 +278,56 @@ ok("stale cache falls back to live", (await call(null, `select * from public.lea
 await throws("visitors can't trigger a cache refresh", null, `select public.refresh_public_cache()`);
 await throws("visitors can't call the live leaderboard directly", null, `select * from public._leaderboard_live('overall', null, null, 5)`);
 
+// ---------------------------------------------------------------- Rank integrity (0017)
+console.log("9. Rank integrity: no farming");
+// R1: replaying the same battle questions must not grow skill stats.
+const skillOf = async u => Number((await one(`select coalesce(sum(attempted),0) n from public.skill_stats where user_id = $1`, [u.id])).n);
+const replay = async () => {
+  const id = (await call(F, `select public.battle_room(2, 'classic', 'pack:consulting') id`))[0].id;
+  await su(`update public.battles set q_ids = (select q_ids from public.battles where id = $2) where id = $1`, [id, ffPack]);
+  return id;
+};
+const ffPack = (await call(F, `select public.battle_room(2, 'classic', 'pack:consulting') id`))[0].id;
+await call(F, `select public.battle_start_now($1, true)`, [ffPack]);
+await setStart(ffPack, 1000);
+const nq0 = (await one(`select cardinality(q_ids) n from public.battles where id = $1`, [ffPack])).n;
+for (let i = 0; i < nq0; i++) await answerAt(ffPack, 1, i, true, 3);
+await finish(ffPack);
+const s1 = await skillOf(F);
+ok("first time through, every question counts", s1 === nq0, `${s1} vs ${nq0}`);
+const again = (await call(F, `select public.battle_room(2, 'classic', 'pack:consulting') id`))[0].id;
+await call(F, `select public.battle_start_now($1, true)`, [again]);
+await su(`update public.battles set q_ids = (select q_ids from public.battles where id = $2) where id = $1`, [again, ffPack]);
+await su(`delete from public.battle_answers where battle_id = $1`, [again]);
+await setStart(again, 1000);
+for (let i = 0; i < nq0; i++) await answerAt(again, 1, i, true, 3);
+await finish(again);
+ok("replaying the same questions adds nothing to skill stats", (await skillOf(F)) === s1, String(await skillOf(F)));
+
+// R2: user-hosted events are never ranked, even with 2+ humans.
+const hosted = (await call(E, `select public.host_event('showdown', 'mixed', now() + interval '1 day', 10, 'Alt farm') r`))[0].r;
+await call(F, `select public.battle_join(null, $1)`, [hosted.code]);
+await su(`update public.battles set scheduled_at = now() - interval '1 second' where id = $1`, [hosted.id]);
+await su(`select public.tick_all()`);
+const hb = await one(`select status, ranked, (select count(*)::int from public.battle_players where battle_id = $1 and user_id is not null) humans from public.battles where id = $1`, [hosted.id]);
+ok("private hosted showdown with 2 humans is unranked", hb.status === "live" && hb.humans === 2 && hb.ranked === false, JSON.stringify(hb));
+
+// R3: rating stops moving against the same opponent after 3 ranked games in 24 h.
+const duelOnce = async () => {
+  const id = (await call(E, `select public.battle_quick(2, 'classic', 'pack:infosys') id`))[0].id;
+  await call(F, `select public.battle_quick(2, 'classic', 'pack:infosys')`);
+  await setStart(id, 1000);
+  const n = (await one(`select cardinality(q_ids) n from public.battles where id = $1`, [id])).n;
+  for (let i = 0; i < n; i++) { await answerAt(id, 1, i, true, 3); await answerAt(id, 2, i, false, 3); }
+  await finish(id);
+  return (await players(id)).find(p => p.user_id === E.id);
+};
+const g = [];
+for (let i = 0; i < 4; i++) g.push(await duelOnce());
+ok("first 3 games vs the same account move rating", g.slice(0, 3).every(p => p.rating_after > p.rating_before), JSON.stringify(g));
+ok("4th game vs the same account in 24 h doesn't", g[3].rating_after === g[3].rating_before, JSON.stringify(g[3]));
+ok("integrity review view exists and is admin-only", (await su(`select count(*) n from public.integrity_review`)).length === 1);
+await throws("players can't read the integrity review", F, `select * from public.integrity_review`);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
