@@ -16,7 +16,9 @@
 - [ ] Migration 0017 applied to production
 - [ ] "Require current password when updating" on (after OAuth test)
 - [ ] MFA on every admin account (Supabase, Vercel, GitHub, Google Cloud, GoDaddy, Resend, ImprovMX, Brevo)
-- [ ] Backup routine + one tested restore
+- [ ] Migration 0018 applied (bulk-delete, TRUNCATE and DROP guards; backup export)
+- [ ] Drive backup script set up (`ops/backup/README.md`) and first backup checked
+- [ ] One tested restore from a Drive backup
 - [ ] Error tracking and alerting
 - [ ] CI running tests on every push
 
@@ -26,7 +28,7 @@
 2. `node build.js` — must print `Design-system lint: 0 problems` and update CSP hashes in `vercel.json`; commit `vercel.json` if it changed.
 3. `npm run test:db` — security, gameplay and weekly suites all pass.
 4. `python3 tests/e2e.py` — `0 problems`.
-5. New migration? Add it as the next `supabase/migrations/00NN_*.sql`, make it safe to re-run, add an attack test, run step 3, then apply to production only with Nakul's approval. Note the previous function definitions for rollback.
+5. New migration? Add it as the next `supabase/migrations/00NN_*.sql`, make it safe to re-run, never drop or bulk-delete user data (the database refuses it; a test fails unless the file carries a `data-safety: reviewed` note explaining why), add an attack test, run step 3, then apply to production only with Nakul's approval. Note the previous function definitions for rollback.
 6. Push, create a Vercel **preview** deployment from the commit, open it and check log-in, a tournament page, a battle and the leaderboard.
 7. Nakul promotes the preview to production in Vercel (⋯ → Promote to Production).
 8. Check https://rankculture.in serves the new commit (Vercel deployment `githubCommitSha`) and the security headers are present.
@@ -41,6 +43,8 @@
 - [ ] Skim `contact_messages` (topic `dispute`) and `feedback`
 
 **Monthly**
+- [ ] Open the **Rank Culture backup log** sheet: every row OK, and a backup in the last 7 days
+- [ ] Delete Drive backups older than 12 months (privacy policy promise)
 - [ ] `npm audit` (root and `supabase/tests`); upgrade with tests, never bulk `--force`
 - [ ] Supabase Advisors (security + performance); compare with the "accepted" list in SECURITY-AUDIT.md
 - [ ] Check cron health: `select jobname, status, count(*) from cron.job_run_details join cron.job using (jobid) where start_time > now() - interval '7 days' group by 1, 2;`

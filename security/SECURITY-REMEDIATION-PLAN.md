@@ -15,7 +15,7 @@
 
 | # | Fix | Finding | Owner | Effort | Notes |
 | --- | --- | --- | --- | --- | --- |
-| P4 | Backups: weekly `pg_dump` of the database to private storage, and one test restore into a throwaway project; or upgrade to Supabase Pro for daily backups | M-4 | Nakul (decision/cost), Claude (script) | 1 day | Document the restore steps once tested |
+| P4 | Backups: apply 0018 and set up the Google Drive backup script (`ops/backup/`); then one test restore; Supabase Pro daily backups as a second layer when budget allows | M-4 | Nakul (setup + approval), Claude (built) | 30 min setup | Built and tested 12 Nov 2026 |
 | P5 | Weekly pipeline: require explicit approval before publishing (remove auto-publish) or keep it and read every review email | M-2 | Nakul (decision) | 1 hour | Runbook rule on untrusted feedback already added |
 | P6 | Full-screen arena with tab-switch, paste and copy logging shown on the result; penalties (void entry, reset rating, ban repeat offenders) and a dispute flow | H-3 | Claude | ~1 week | Signals, not proof: shown to reviewers |
 | P7 | More detection: same-wrong-answer matching between accounts, sudden rating jumps, many accounts from one device/IP | H-3, M-3 | Claude | 1–2 weeks | Feeds `integrity_review` |

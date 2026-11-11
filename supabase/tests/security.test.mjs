@@ -152,7 +152,7 @@ console.log("10. Grants");
 const g = (await su(`select table_name, grantee, privilege_type from information_schema.role_table_grants where table_schema='public' and grantee in ('anon','authenticated') and privilege_type in ('TRUNCATE','TRIGGER','REFERENCES')`)).rows;
 ok("no TRUNCATE/TRIGGER/REFERENCES grants to API roles", g.length === 0, JSON.stringify(g.slice(0, 3)));
 const anonDefiner = (await su(`select proname from pg_proc where pronamespace='public'::regnamespace and prosecdef and has_function_privilege('anon', oid, 'execute') order by 1`)).rows.map(r => r.proname);
-const allowed = ["decide_batch", "leaderboard_v2", "packs_list", "review_batch", "send_contact", "send_feedback", "site_stats", "skills_list", "tournament_counts"];
+const allowed = ["backup_snapshot", "backup_status", "decide_batch", "leaderboard_v2", "packs_list", "review_batch", "send_contact", "send_feedback", "site_stats", "skills_list", "tournament_counts"];
 ok("only intended functions are public", JSON.stringify(anonDefiner) === JSON.stringify(allowed), JSON.stringify(anonDefiner));
 const noPath = (await su(`select proname from pg_proc where pronamespace='public'::regnamespace and prosecdef and not coalesce(array_to_string(proconfig, ',') like '%search_path%', false)`)).rows;
 ok("every SECURITY DEFINER function pins search_path", noPath.length === 0, JSON.stringify(noPath));

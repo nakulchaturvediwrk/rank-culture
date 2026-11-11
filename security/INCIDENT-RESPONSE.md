@@ -57,7 +57,7 @@ Run the three statements in this order. Tested on the local replica on 11 Nov 20
 ## 5. Recovery
 
 - Fix the cause in code with a regression test (see SECURITY-CHECKLIST.md → deployment checklist), deploy through a preview, promote.
-- Restore data from the latest backup if rows were lost (backup routine is remediation item P4 — not yet in place).
+- Restore data from the latest Drive backup (folder **Rank Culture backups**; each tab = one table, columns = database columns) if rows were lost. Unlock is not needed to read or copy from it.
 - Turn sign-ups and revoked functions back on only after the fix is live.
 
 ## 6. Communication
