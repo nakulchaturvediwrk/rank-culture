@@ -192,7 +192,7 @@ const footer = () => `
       <li><a href="privacy.html">Privacy</a></li>
     </ul></div>
   </div>
-  <div class="base"><span>© 2026 Rank Culture. Made in India.</span><a href="contact.html">Contact & support</a></div>
+  <div class="base"><span>© 2026 Rank Culture. Made in India.</span><span><a href="mailto:support@rankculture.in">support@rankculture.in</a> · <a href="mailto:talks@rankculture.in">talks@rankculture.in</a></span></div>
 </div></footer>`;
 
 const scripts = () => `<div class="toast" id="toast" role="status" aria-live="polite"></div>

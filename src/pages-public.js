@@ -237,6 +237,7 @@ const employers = publicPage({
     <h1 class="t-display">Hire people who already did the job.</h1>
     <p class="lead">Stop screening thousands of resumes for ten interviews. Hire from candidates who proved the exact skill in a timed, server-scored tournament — or host your own.</p>
     <div class="row"><a class="btn btn-primary btn-lg" href="contact.html?topic=employer">Join the hiring pilot</a><a class="btn btn-lg" href="recruiter.html">See a console preview</a></div>
+    <p class="t-sm muted">Prefer email? Write to <a class="link" href="mailto:talks@rankculture.in">talks@rankculture.in</a>.</p>
   </div>
   <div class="grid g2">
     <div class="card kpi"><div class="label muted">Proof, not paper</div><p class="t-body mt1" style="font-weight:600">Every score comes from timed, server-scored work.</p></div>
@@ -282,7 +283,7 @@ const pricing = publicPage({
       <button class="btn btn-dark btn-block" data-modal="upgrade-modal">Join the Pro waitlist</button></div>
     <div class="card card-lg dark stack"><div class="label" style="color:#9DB1FF">Campus</div><div class="mono t-display">Free</div><p class="muted t-sm">For placement cells and college clubs.</p>
       <ul style="list-style:none" class="stack t-sm">${["Private college tournaments", "Batch rank reports", "Pro for every student at ₹49", "Placement officer dashboard"].map(x => `<li class="row">${ic("check")}${x}</li>`).join("")}</ul>
-      <a class="btn btn-primary btn-block" href="contact.html?topic=college">Bring to my college</a></div>
+      <a class="btn btn-primary btn-block" href="contact.html?topic=college">Bring to my college</a><p class="t-xs" style="color:#A9ABB5">or email <a class="link" style="color:#9DB1FF" href="mailto:campus@rankculture.in">campus@rankculture.in</a></p></div>
   </div>
   <p class="t-xs muted center mt4">Planned prices, including GST. Pro and Campus aren't on sale during the pilot — everything you need to compete and get ranked is free.</p>
 </div></section>
@@ -319,7 +320,7 @@ const about = publicPage({
 </div></section>
 <section class="section"><div class="container grid g2" style="gap:var(--s7);align-items:center">
   <div class="stack"><div class="label muted">Founder</div><h2 class="t-h1">Nakul Chaturvedi</h2><p class="muted">Civil engineer from NIT Surat who worked his way into founder's-office roles across fintech, media and real estate — and saw first-hand how much talent gets filtered out before anyone looks at the work.</p>
-    <div class="row"><a class="link" href="https://www.linkedin.com/in/nakulchaturvediwork" target="_blank" rel="noopener">LinkedIn →</a><a class="link" href="contact.html">Get in touch →</a></div></div>
+    <div class="row"><a class="link" href="https://www.linkedin.com/in/nakulchaturvediwork" target="_blank" rel="noopener">LinkedIn →</a><a class="link" href="mailto:talks@rankculture.in">talks@rankculture.in →</a></div></div>
   <div class="card dark card-lg"><p class="t-h2">"We're not building another job board. We're building the arena."</p></div>
 </div></section>`,
 });
@@ -346,6 +347,10 @@ const contact = publicPage({
   <div class="stack">
     ${[["Candidates", "Account help, sign-in trouble, tournament or battle issues."], ["Score disputes", "Tell us the tournament and task. We re-check it and reply with what we found."], ["Employers & colleges", "Join the hiring pilot or run a private tournament for your campus."], ["Your data", "Export or delete everything yourself in Settings → Data, or ask us here."]]
       .map(([h, p]) => `<div class="card"><h3 class="t-h3">${h}</h3><p class="t-sm muted mt1">${p}</p></div>`).join("")}
+    <div class="card stack"><h3 class="t-h3">Email us directly</h3>
+      ${[["support@rankculture.in", "Account help, score disputes, your data"], ["talks@rankculture.in", "Employers, investors, mentors and press"], ["campus@rankculture.in", "College placement cells and clubs"]]
+        .map(([a, d]) => `<div><a class="link t-sm" style="text-transform:none" href="mailto:${a}">${a}</a><p class="t-xs muted">${d}</p></div>`).join("")}
+    </div>
     <p class="t-xs muted">We usually reply within two working days, to the email you give here.</p>
   </div>
 </div></section>`,
@@ -368,7 +373,7 @@ const legal = (title, eyebrow, sections) => publicPage({
 const terms = legal("Terms of service", "Legal", [
   ["Who we are", ["Rank Culture is a skill-ranking platform run by its founder, Nakul Chaturvedi, from India. You compete in timed tournaments and live battles, earn a rank, and can apply to roles with it. By creating an account you agree to these terms and to our <a class=\"link\" href=\"privacy.html\">privacy policy</a>."]],
   ["Who can join", ["You must be 18 or older and give us an email address you control. One account per person."]],
-  ["Fair play", ["Do the work yourself — no outside help, no AI tools unless a task says so, and no sharing tournament questions or answers.", "Don't run more than one account, throw battles to boost someone's rating, or try to get around the timer or our systems.", "The timer runs on our server and tab switches are recorded with your entry. If we find cheating we can void scores, remove ratings and suspend accounts. You can ask us to review that decision through the contact form."]],
+  ["Fair play", ["Do the work yourself — no outside help, no AI tools unless a task says so, and no sharing tournament questions or answers.", "Don't run more than one account, throw battles to boost someone's rating, or try to get around the timer or our systems.", "The timer runs on our server and tab switches are recorded with your entry. If we find cheating we can void scores, remove ratings and suspend accounts. You can ask us to review that decision through the contact form or at <a class=\"link\" href=\"mailto:support@rankculture.in\">support@rankculture.in</a>."]],
   ["How scoring works", ["Multiple-choice tasks and battle questions are scored automatically on our server. Written answers are saved with your entry but don't count toward your score during the pilot.", "If you think a score is wrong, tell us within 7 days through the <a class=\"link\" href=\"contact.html?topic=dispute\">contact form</a>. We'll re-check it and reply.", "Scores can't be bought, transferred or edited by you. Each tournament allows one attempt."]],
   ["Jobs and fast-tracks", ["During the pilot, the companies and roles on the jobs board are fictional examples and applications are not sent to any employer. We'll say clearly when a real partner role goes live.", "A fast-track means your application skips resume screening. It is not a promise of an interview or a job — employers make their own hiring decisions."]],
   ["Battles, rooms and hosted events", ["If you host an event, you're responsible for its name and who you invite. We can rename or remove events that are offensive or misleading.", "Practice bots fill empty seats; games against bots and private rooms don't change your arena rating."]],
@@ -377,7 +382,7 @@ const terms = legal("Terms of service", "Legal", [
   ["Payments", ["Nothing on Rank Culture is for sale during the pilot and we won't ask for payment details. If we introduce paid plans we'll publish their terms first."]],
   ["Ending your account", ["You can delete your account any time in Settings → Data. It is deleted straight away. We can suspend accounts that break these terms."]],
   ["The pilot", ["Rank Culture is new and provided as it is. Features may change, and events can be cancelled or rescheduled. To the extent the law allows, we aren't liable for indirect losses from using the service."]],
-  ["Contact", ["Questions about these terms? <a class=\"link\" href=\"contact.html?topic=other\">Send us a message</a>."]],
+  ["Contact", ["Questions about these terms? <a class=\"link\" href=\"contact.html?topic=other\">Send us a message</a> or email <a class=\"link\" href=\"mailto:support@rankculture.in\">support@rankculture.in</a>."]],
 ]);
 const privacy = legal("Privacy policy", "Legal", [
   ["The short version", ["Your profile and scores are private by default. You choose whether your name appears on public leaderboards. We don't sell your data, show ads or use tracking cookies."]],
@@ -386,7 +391,7 @@ const privacy = legal("Privacy policy", "Legal", [
   ["Where it's stored", ["Your data is stored by Supabase (database and sign-in) in its Mumbai region, and the site is served by Vercel. Sign-in and password-reset emails (with one-time codes) are sent through Resend, from its Tokyo region. These providers process data only to run Rank Culture.", "To protect against data loss, a backup copy of account and activity data (never passwords) is saved to Rank Culture's private Google Drive after every 50 new sign-ups and once a week. Backups are read-only and only the founder can open them."]],
   ["On your device", ["We keep your sign-in session and any tournament answers you haven't submitted yet in your browser's storage, so a refresh doesn't lose your work. We use no advertising or analytics cookies."]],
   ["How long we keep it", ["We keep your data while your account exists. Deleting your account in Settings → Data removes your profile, ranks, entries, battle history, applications and messages straight away; copies in our providers' backups expire within their normal backup cycle, and our own Google Drive backups are kept for up to 12 months and then deleted.", "Messages sent without an account are kept for up to 12 months."]],
-  ["Your rights", ["Under India's Digital Personal Data Protection Act, 2023 you can access, correct and erase your data and raise a grievance. Export or delete everything yourself in Settings → Data, correct your profile in Settings → Account, or <a class=\"link\" href=\"contact.html?topic=other\">contact us</a>. Our grievance contact is the founder, Nakul Chaturvedi, through the same form.", "You must be 18 or older to use Rank Culture."]],
+  ["Your rights", ["Under India's Digital Personal Data Protection Act, 2023 you can access, correct and erase your data and raise a grievance. Export or delete everything yourself in Settings → Data, correct your profile in Settings → Account, or <a class=\"link\" href=\"contact.html?topic=other\">contact us</a>. Our grievance contact is the founder, Nakul Chaturvedi: email <a class=\"link\" href=\"mailto:support@rankculture.in\">support@rankculture.in</a> or use the same form.", "You must be 18 or older to use Rank Culture."]],
 ]);
 
 // ---------- 404 ----------

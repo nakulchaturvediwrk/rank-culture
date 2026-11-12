@@ -101,7 +101,7 @@ const forgot = barePage({
     <button class="btn btn-primary btn-lg btn-block" type="submit">Reset password and log in ${ic("arrow")}</button>
     <div class="row between"><button class="btn btn-ghost btn-sm" type="button" id="rp-resend">Resend code</button><button class="btn btn-ghost btn-sm" type="button" id="rp-back">Start again</button></div>
   </form>
-  <p class="t-sm muted">Lost access to your email and phone? <a class="link" href="contact.html">Contact support</a>.</p>
+  <p class="t-sm muted">Lost access to your email and phone? Email <a class="link" href="mailto:support@rankculture.in">support@rankculture.in</a> from any address, or use the <a class="link" href="contact.html">contact form</a>.</p>
 </div></div></div>`,
 });
 
